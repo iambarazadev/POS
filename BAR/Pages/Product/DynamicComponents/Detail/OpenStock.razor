@@ -1,0 +1,149 @@
+<div class="row py-0 text-unique ">
+    <div class="col-1 p-2 text-start">#</div>
+    <div class="col-lg-2 col-3 py-1 text-start text-unique">
+        <NavLink class="p-0 m-0 text-unique" href="" >
+            <ul class=" text-start m-0 p-0">
+                <li>OPEN</li>
+                <li class=" p-0 opacity-75" style="font-size:0.7rem !important; ">OPEN</li>
+            </ul>
+        </NavLink>
+    </div>
+    <div class="col-lg-2 col-3 py-1 text-start text-unique">
+        <NavLink class="p-0 m-0 text-unique" href="" style="font-size:0.8rem !important;">
+            <ul class=" text-start m-0 p-0">
+                <li>&#64; Cost</li>
+                <li class=" p-0 opacity-75" style="font-size:0.7rem !important; ">&sum; Cost</li>
+            </ul>
+        </NavLink>
+    </div>
+    <div class=" col-lg-2 py-1 text-center text-unique d-none d-lg-block">
+        <ul class=" m-0 p-0">
+            <li>Stock</li>
+            <li class="opacity-75" style="font-size:0.7rem !important;">Before</li>
+        </ul>
+    </div>
+    <div class=" col-lg-1 col-2 py-1 text-center text-unique">
+        <ul class="text-center m-0 p-0">
+            <li class="text-center">Stock</li>
+            <li class="opacity-75 text-center" style="font-size:0.7rem !important;">Opened</li>
+        </ul>
+    </div>
+    <div class=" col-lg-2 py-1 text-center text-unique d-none d-lg-block">
+        <ul class=" justify-content-center m-0 p-0">
+            <li>Stock</li>
+            <li class="opacity-75" style="font-size:0.7rem !important;">Closed</li>
+        </ul>
+    </div>
+    <div class="col-lg-2 col-3 py-1 text-start text-unique" style="font-size:0.8rem !important;">
+        <ul class=" m-0 p-0 ">
+            <li class="">Date</li>
+            <li class="opacity-75 " style="font-size:0.7rem !important;">Day & Time</li>
+        </ul>
+    </div>
+</div>
+@{
+    if(!TheseProductOpens.Any()){
+        <div class="container text-center">
+            <p class="p-3  fs-4 text-unique fw-lighter">..No Purchase info.</p>
+        </div>
+    }
+    else{
+        int index = 0;
+        foreach(var item in TheseProductOpens){
+            index+=1;
+            <div class="row bg-xs border-bottom py-0 text-unique">
+                <div class="col-1 py-2 text-center">@(index)</div>
+                <div class="col-lg-2 col-3 py-2 text-start text-primary opacity-75">
+                    <a href="Opens/Detail/@item.Open.OpenId" class="p-0 m-0 text-unique"  style="font-size:0.8rem !important;">
+                        <ul class=" m-0 p-0">
+                            <li class="fw-bolder text-primary opacity-75 txtshadow">@(item.Open.OpenCode + item.Open.OpenId)</li>
+                            <li class=" opacity-75 fw-bolder" style="font-size:0.7rem !important;">@(item.Open.OpenCode + item.Open.OpenId)</li>
+                        </ul>
+                    </a>
+                </div>
+                <div class="col-lg-2 col-3 py-2 text-start text-unique">
+                    <a class="p-0 m-0 text-unique" href="" style="font-size:0.8rem !important;">
+                        <ul class=" m-0 p-0">
+                            <li class="text-primary opacity-75">&#64; @item.ProductItemCost.Value.ToString("n0")</li>
+                            <li class=" opacity-75 d-none d-sm-block" style="font-size:0.7rem !important;">&sum; @((item.ProductItemCost * item.ProductItemQty).Value.ToString("n0"))</li>
+                        </ul>
+                    </a>
+                </div>
+                <div class=" col-lg-2 py-2 text-center text-unique d-none d-lg-block">
+                    0
+                </div>
+                <div class="col-lg-1 col-2 py-2 text-center txtshadow">
+                    @item.ProductItemQty
+                </div>
+                <div class=" col-lg-2 py-2 text-center text-unique d-none d-lg-block">
+                    @(item.ProductItemQty)
+                </div>
+                <div class="col-lg-2 col-3 py-2 text-start text-unique" style="font-size:0.75rem !important; ">
+                    <ul class=" text-start m-0 p-0">
+                        <li>@(item.Open.OpenDateCreated.ToString("dd MMM yy"))</li>
+                        <li class=" opacity-75 d-none d-sm-block" style="font-size:0.7rem !important;">@(item.Open.OpenDateCreated.ToString("ddd hh : mm"))</li>
+                    </ul>
+                </div>
+            </div>
+        }
+        <DetailPagination 
+            InnerCurrentPage=@InnerCurrentPage InnerTotalPages=@InnerTotalPages
+            InnerNextPage=@InnerNextPage InnerPreviousPage=@InnerPreviousPage
+        />
+    }
+}
+
+@code{
+    //  Inner Pagination 
+    private int InnerTotalPages = 1;
+    private int InnerCurrentPage = 1;
+    private int InnerPageSize = 7 ;
+    
+    [Parameter]
+    public Product ProductToCheck {get;set;}
+    private List<ProductOpen> TheseProductOpens = new();
+    
+    protected override async Task OnInitializedAsync(){
+        await base.OnInitializedAsync();  
+        InnerNextPage();
+        StateHasChanged();
+    }
+    
+    private async Task InnerNextPage(){
+        if(ProductToCheck.ProductOpen.Any()){
+            InnerTotalPages = ((int)(Math.Ceiling((double)(ProductToCheck.ProductOpen.Count)/InnerPageSize)));
+            
+            if(InnerCurrentPage < InnerTotalPages ){
+                InnerCurrentPage ++ ;
+            }
+            else{
+                InnerCurrentPage = InnerTotalPages; 
+            }
+            
+            TheseProductOpens = ProductToCheck.ProductOpen
+            .Skip((InnerCurrentPage - 1) * InnerPageSize)
+            .Take(InnerPageSize)
+            .ToList();
+        }
+        StateHasChanged();
+    }
+    
+    private async Task InnerPreviousPage(){
+        if(ProductToCheck.ProductOpen.Any()){
+            InnerTotalPages = ((int)(Math.Ceiling((double)(ProductToCheck.ProductOpen.Count)/InnerPageSize)));
+            
+            if(InnerCurrentPage > 1 ){
+                InnerCurrentPage -- ;
+            }
+            else{
+                InnerCurrentPage = 1; 
+            }
+            
+            TheseProductOpens = ProductToCheck.ProductOpen
+            .Skip((InnerCurrentPage - 1) * InnerPageSize)
+            .Take(InnerPageSize)
+            .ToList();
+        }
+        StateHasChanged();
+    }
+}

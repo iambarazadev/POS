@@ -1,0 +1,271 @@
+@page "/Sale/BillWise"
+
+@using Microsoft.EntityFrameworkCore
+@inject IDbContextFactory<BarContext> MyFactory
+@inject NavigationManager Navigation
+
+<PageTitle>Sales | @SubTitle</PageTitle>
+
+<Options 
+    Title=@Title Icon=@Icon 
+    Url=@Url UrlCaption=@UrlCaption 
+    CreateUrl=@CreateUrl SubTitle=@SubTitle 
+    UrlCaptionIcon=@UrlCaptionIcon OptionIcon=@OptionIcon
+    SingleDay=true SingleDate=@((DateTime.Now))
+/>
+
+<div class="row bg-white p-3" style="min-height:75vh !important;">
+    <div class="col-lg-7 col-12">
+        <div class="row bg-unique shadow-sm txtshadow rounded-0 text-unique border-end border-2 border-white" >
+            <div class="col-1 text-center py-3 fw-bolder">:</div>
+            <div class="col-1 text-center py-3 fw-bolder">#</div>
+            <div class="col-md-2 col-3 py-3 text-start ">BILL</div>
+            <div class="col-md-2 d-none d-md-block py-3 text-center">ITEMS</div>
+            <div class="col-3 py-3 text-start">SALES</div>
+            <div class="col-md-3 col-4 py-3 text-start pe-0">RESPONSIBLE</div>
+        </div>
+
+        @{
+            if(TheseBills.Any()){
+                
+                foreach(var BillItem in TheseBills){
+                    double TotalSaleB = 0.0;
+                                
+                    foreach(var TaskB in BillItem.ProductBill){
+                        TotalSaleB += TaskB.BillItemPrice * TaskB.QtyPurchased;
+                    }
+                    
+                    <div class="row rounded-0 text-unique border-end border-end-3 border-white" @onclick=@(()=> GetBillItems(BillItem)) style="cursor:pointer;"  >
+                        <div class="col-1 text-center pt-3 fw-bolder">
+                            <input type="radio" />
+                        </div>
+                        <div class="col-1 text-center pt-3 fw-bolder">@(TheseBills.IndexOf(BillItem) + 1)</div>
+                        <div class="col-md-2 col-3 py-1 text-start ">
+                            <ul class="p-0 m-0 d-flex flex-column text-start">
+                                <li class="p-0 m-0 text-primary">@(BillItem.BillCode+BillItem.BillId)</li>
+                                <li class="rounded-3 m-0 opacity-75" style="font-size:0.8rem !important; width:fit-content;">@((BillItem.BillDateCreated).ToString("hh : mm tt"))</li>
+                            </ul>
+                        </div>
+                        <div class="col-md-2 d-none d-md-block pt-3 text-center">@BillItem.ProductBill.Count</div>
+                        <div class="col-3 py-1 text-start">
+                            <ul class="p-0 m-0 d-flex flex-column text-start">
+                                <li class="p-0 m-0 text-primary">
+                                    <ul class="p-0 m-0 d-flex flex-row justify-content-start text-start">
+                                        <li class="d-md-block d-none pe-1">Sales :</li>
+                                        <li>@TotalSaleB.ToString("n0")</li>
+                                    </ul>
+                                </li>
+                                <li class="rounded-3 m-0 opacity-75" style="font-size:0.7rem !important; width:fit-content;">
+                                    <ul class="p-0 m-0 d-flex flex-row justify-content-start text-start">
+                                        <li class="d-md-block d-none pe-1">Cost :</li>
+                                        <li>700,000</li>
+                                    </ul>
+                                </li>
+                            </ul>
+                        </div>
+                        <div class="col-md-3 col-4 py-1 text-start pe-0">
+                            <ul class="p-0 m-0 d-flex flex-column text-start">
+                                <li class="p-0 m-0 text-unique "> @BillItem.User.UserAccessLevel</li>
+                                <li class="rounded-3 m-0 opacity-75" style="font-size:0.7rem !important; width:fit-content;">@BillItem.User.UserFirstName @BillItem.User.UserLastName</li>
+                            </ul>
+                        </div>
+                    </div>  
+                }
+            }else{
+                <li class="p-3 m-0 bg-xs rounded text-center text-capitalize text-unique fw-bolder opacity-50">
+                    No Records
+                </li>
+            }
+        }
+        
+    </div>
+    <div class="col-lg-5 col-12">
+        <div class="row bg-unique shadow-sm txtshadow rounded-0 text-unique border-start border-2 border-white ">
+            <div class="col-1 text-center py-3 fw-bolder">#</div>
+            <div class="col-3 py-3 text-start ">PRODUCT</div>
+            <div class="col-2 py-3 text-center">PCS</div>
+            <div class="col-3 py-3 text-start pe-0">RETAIL PRICE</div>
+            <div class="col-3 py-3 text-start pe-0">COST INFO</div>
+        </div>
+        
+        @{
+            foreach(var ItemList in TheseProductBills){
+                <div class="row bg-xs txtshadow rounded-0 text-unique border-start border-2 border-white ">
+                    <div class="col-1 text-center py-2 fw-bolder">@(TheseProductBills.IndexOf(ItemList) + 1)</div>
+                    <div class="col-3 py-1 text-start pe-0">
+                        <ul class="p-0 m-0 d-flex flex-column text-start">
+                            <li class="p-0 m-0 text-primary opacity-75 text-capitalize"> @(ItemList.Product.ProductCaption.Length > 20 ? ItemList.Product.ProductCaption.Substring(0,18) + ".." : ItemList.Product.ProductCaption)</li>
+                            <ul class="p-0 m-0 d-flex flex-row text-start">
+                                <li class="rounded-3 m-0 opacity-75 text-capitalize" style="font-size:0.8rem !important; width:fit-content;">
+                                    @(ItemList.Product.ProductCode + ItemList.ProductId)
+                                </li>
+                            </ul>
+                        </ul>
+                    </div>
+                    <div class="col-2 py-2 text-center opacity-75">@ItemList.QtyPurchased</div>
+                    <div class="col-3 py-2 text-center pe-0">
+                        <ul class="p-0 m-0 d-flex flex-column text-start">
+                            <li class="p-0 m-0 text-primary opacity-75">
+                                &sum; @((ItemList.BillItemPrice * ItemList.QtyPurchased).ToString("n0"))
+                            </li>
+                            <li class="rounded-3 m-0 opacity-75" style="font-size:0.7rem !important; width:fit-content;">
+                                &#64; @ItemList.BillItemPrice.ToString("n0")
+                            </li>
+                        </ul>
+                    </div>
+                    <div class="col-3 py-2 text-center pe-0">
+                        <ul class="p-0 m-0 d-flex flex-column text-start">
+                            <li class="p-0 m-0 text-primary opacity-75">
+                                &sum; @((ItemList.BillItemPrice * ItemList.QtyPurchased).ToString("n0"))
+                            </li>
+                            <li class="rounded-3 m-0 opacity-75" style="font-size:0.7rem !important; width:fit-content;">
+                                &#64; @ItemList.BillItemPrice.ToString("n0")
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+            }
+        }
+        
+    </div>
+</div>
+
+@code{
+    
+    //  Options Variables
+    public string Title = "Sales";
+    public string SubTitle = "List view";
+    public string Icon = "stack";
+    public string OptionIcon = "view-stacked";
+    public string Url = "Sales";
+    public string UrlCaption = "List View";
+    public string UrlCaptionIcon = "view-stacked";
+    public string CreateUrl = "Sale/Create";
+
+    private DateTime FromDate = DateTime.Now;
+    private DateTime ToDate = DateTime.Now;
+    private string TempoBackground = "";
+    
+    private List<Bill> TheseBills = new();
+    private Bill SelectedBill = new();
+    private List<ProductBill> TheseProductBills = new();
+    private List<User> Staffs = new();
+    private int Uid = 0;
+    private int? Bid = null;
+    private double DateSales = 0.0;
+    
+    protected override async Task OnInitializedAsync(){
+        await base.OnInitializedAsync();
+        FromDate = DateTime.Today;
+        ToDate = DateTime.Now;
+        Bid = null;
+        Uid = 0;
+        
+        await GetBillsDateWiseByUser();
+        using(var repo = new UnitOfWork(MyFactory.CreateDbContext())){
+            Staffs = await repo.Users.GetAllUsersDetailedAsync(1, repo.Users.GetNoRecords());
+            
+            await repo.CompleteAsync();
+            repo.Dispose();
+        }
+    }
+    
+    private async Task GetThisBill(int? BillNumber){
+        
+        if(BillNumber != null){
+            
+            TheseBills = new();
+            TheseProductBills = new();
+            SelectedBill = new();
+            
+            using(var repo = new UnitOfWork(MyFactory.CreateDbContext())){
+                Bill ABill = await repo.Bills.GetDetailedBillAsync((int)BillNumber);
+                if(ABill != null){
+                    TheseBills.Add(ABill);
+                    
+                    FromDate = ABill.BillDateCreated;
+                    ToDate = ABill.BillDateCreated;
+                    Uid = (int)ABill.UserId;
+                    SelectedBill = ABill;
+                }else{
+                    TheseBills = new();
+                    Uid = 0;
+                    Bid = null;
+                    FromDate = DateTime.Now;
+                    ToDate = DateTime.Now;
+                }
+                
+                SetDateSales();
+                
+                await repo.CompleteAsync();
+                repo.Dispose();
+            }
+        }
+    }
+    
+    private async Task GetBillsDateWise(){
+        TheseBills = new();
+        TheseProductBills = new();
+        SelectedBill = new();
+        Bid = null;
+        Uid = 0;
+        
+        using(var repo = new UnitOfWork(MyFactory.CreateDbContext())){
+            TheseBills = await repo.Bills.GetAllBillsDateWiseDetailedAsync(FromDate, ToDate);
+            
+            await repo.CompleteAsync();
+            repo.Dispose();
+        }
+       SetDateSales();
+    }
+    
+    private async Task GetBillsDateWiseByUser(){
+        TheseBills = new();
+        TheseProductBills = new();
+        SelectedBill = new();
+        Bid = null;
+        
+        using(var repo = new UnitOfWork(MyFactory.CreateDbContext())){
+            if(Uid > 0){
+                TheseBills = await repo.Bills.GetAllBillsDateWiseWithUserDetailedAsync(FromDate, ToDate,Uid);
+            }
+            else{
+                await GetBillsDateWise();
+            }
+            
+            await repo.CompleteAsync();
+            repo.Dispose();
+        }
+        SetDateSales();
+    }
+    
+    private async Task GetBillItems(Bill TempData){
+        TheseProductBills = new();
+        SelectedBill = new();
+        
+        if(TempData != null){
+            
+            TheseProductBills = TempData.ProductBill;
+            SelectedBill = await Task.Run(()=> (Bill)TempData);
+        }
+        Bid = null;
+        SetDateSales();
+        StateHasChanged();
+    }
+    
+    private void SetDateSales(){
+        double InnerTotal = 0.0;
+        DateSales = 0.0;
+        if(TheseBills.Any()){
+            foreach(var item in TheseBills){
+                foreach(var bill in item.ProductBill){
+                    InnerTotal += ((bill.QtyPurchased)*(bill.BillItemPrice));
+                }
+                DateSales += InnerTotal;
+                InnerTotal = 0.0;
+            }
+        }else{
+            DateSales = 0.0;
+        }
+    }
+}

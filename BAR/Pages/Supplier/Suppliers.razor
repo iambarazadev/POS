@@ -1,0 +1,167 @@
+@page "/Suppliers"
+
+@using Microsoft.EntityFrameworkCore
+@inject IDbContextFactory<BarContext> MyFactory
+@inject NavigationManager Navigation
+
+<PageTitle>Suppliers</PageTitle>
+
+<Options 
+    Title=@Title Icon=@Icon 
+    Url=@Url UrlCaption=@UrlCaption 
+    CreateUrl=@CreateUrl SubTitle=@SubTitle 
+    UrlCaptionIcon=@UrlCaptionIcon OptionIcon=@OptionIcon
+    NextPage=@NextPage PreviousPage=@PreviousPage
+    FirstPage=@FirstPage LastPage=@LastPage
+    CurrentPage=@CurrentPage TotalPages=@TotalPages
+/>
+ 
+<div class="row bg-white p-3 text-unique" style="min-height:75vh !important;">
+    <div class="col-12">
+        <div class="row text-white  shadow-sm txtshadow bg-unique">
+            <div class="col-1 text-center py-3 fw-bolder">#</div>
+            <div class="col-md-2 col-4 py-3 text-start ">Supplier</div>
+            <div class="col-lg-2 col-md-3 col-5 py-3 text-start ">Contacts</div>
+            <div class="col-md-2 d-none d-md-block py-3 text-md-start text-center">TIN | VAT</div>
+            <div class="col-lg-3 col-md-2 d-none d-md-block py-3 text-start">Address</div>
+            <div class="col-2 py-3 text-center">Action</div>
+        </div>
+        @{
+            if(!TheseSuppliers.Any()){
+                <div class="container text-center">
+                    <p class="p-3  fs-4 text-unique fw-lighter opacity-75">-- : --</p>
+                </div>
+            }
+            else{
+                foreach(var item in TheseSuppliers){
+                    <div class="row border-bottom ">
+                        <div class="col-1 text-center py-2">@(item.SupplierId)</div>
+                        <div class="col-md-2 col-4 py-1 text-start ">
+                            <a class="p-0 m-0 text-unique" href="Suppliers/Detail/@item.SupplierId">
+                                <ul class="p-0 m-0 d-block text-start " style="">
+                                    <li class="p-0 m-0 text-primary text-capitalize" >@(item.SupplierName.Length > 12 ? item.SupplierName.Substring(0,8) + " .." : item.SupplierName )</li>
+                                    <li class="p-0 m-0 opacity-75 " style="font-size:0.8rem !important; width:fit-content;">@(item.SupplierCode + item.SupplierId)</li>
+                                </ul>
+                            </a>
+                        </div>
+                        <div class="col-lg-2 col-md-3 col-5 py-1 text-start ">
+                            <ul class="p-0 m-0 d-block text-start " style="">
+                                <li class="p-0 m-0 text-unique" ><i class="bi bi-phone"></i> @item.SupplierPhone</li>
+                                <li class="p-0 m-0 opacity-75 " style="font-size:0.8rem !important; width:fit-content;">@(item.SupplierEmail.Length > 20 ? item.SupplierEmail.Substring(0,19) + " .." : item.SupplierEmail)</li>
+                            </ul>
+                        </div>
+                        <div class="col-md-2 d-none d-md-block py-2 text-unique text-md-start text-center">@item.SupplierTIN</div>
+                        <div class="col-lg-3 col-md-2 d-none d-md-block text-unique py-2 text-start text-capitalize">
+                            <i class="bi bi-geo-alt-fill " style="font-size:0.8rem !important;"></i> @(item.SupplierAddress.Length > 23 ? item.SupplierAddress.Substring(0,21) + " .." : item.SupplierAddress )
+                        </div>
+                        <div class="col-2 px-0 text-center" style="padding-top:0.8rem !important;">
+                            <a href="Suppliers/Edit/@item.SupplierId" class=" text-primary px-md-3 px-2 py-1 border border-2 " style="width:fit-content; margin:1px auto;">Edit</a>
+                        </div>
+                    </div>
+                }
+            }
+        }
+    </div>
+</div>
+
+@code{
+    public string Title = "Suppliers";
+    public string Icon = "truck-flatbed";
+    public string OptionIcon = "view-stacked";
+    public string SubTitle = "List view";
+    public string Url = "Suppliers/Detail/0";
+    public string UrlCaption = "Detail View";
+    public string UrlCaptionIcon = "ui-checks-grid";
+    public string CreateUrl = "Suppliers/Create";
+
+  
+    // Data Variables
+    private List<Supplier> TheseSuppliers = new();
+    private int CurrentPage = 0;
+    private int PageSize = 7;
+    private int TotalPages = 1;
+    
+    protected override async Task OnInitializedAsync(){
+        
+        await base.OnInitializedAsync();
+        await NextPage();
+    }
+    
+    private async Task NextPage(){
+        using(var repo = new UnitOfWork(MyFactory.CreateDbContext())){
+            
+            double Num = (double)(repo.Suppliers.GetNoRecords())/PageSize;
+            TotalPages = (int)(Math.Ceiling(Num));
+            
+            if(CurrentPage < TotalPages ){
+               CurrentPage ++ ;
+            }
+            else{
+                CurrentPage = TotalPages; 
+            }
+            
+            TheseSuppliers = await repo.Suppliers.GetAllSuppliersDetailedAsync(CurrentPage, PageSize);
+            
+            await repo.CompleteAsync();
+            repo.Dispose(); 
+        }
+        
+        StateHasChanged();
+    }
+    
+    private async Task PreviousPage(){
+        using(var repo = new UnitOfWork(MyFactory.CreateDbContext())){
+            
+            double Num = (double)(repo.Suppliers.GetNoRecords())/PageSize;
+            TotalPages = (int)(Math.Ceiling(Num));
+            
+            if(CurrentPage > 1 ){
+               CurrentPage -- ;
+            }
+            else{
+                CurrentPage = 1; 
+            }
+            
+            TheseSuppliers = await repo.Suppliers.GetAllSuppliersDetailedAsync(CurrentPage, PageSize);
+            
+            await repo.CompleteAsync();
+            repo.Dispose(); 
+        }
+        
+        StateHasChanged();
+    }
+    
+    private async Task FirstPage(){
+        using(var repo = new UnitOfWork(MyFactory.CreateDbContext())){
+            
+            double Num = (double)(repo.Suppliers.GetNoRecords())/PageSize;
+            TotalPages = (int)(Math.Ceiling(Num));
+            
+            CurrentPage = 1;
+            
+            TheseSuppliers = await repo.Suppliers.GetAllSuppliersDetailedAsync(CurrentPage, PageSize);
+            
+            await repo.CompleteAsync();
+            repo.Dispose(); 
+        }
+        
+        StateHasChanged();
+    }
+    
+    private async Task LastPage(){
+        using(var repo = new UnitOfWork(MyFactory.CreateDbContext())){
+            
+            double Num = (double)(repo.Suppliers.GetNoRecords())/PageSize;
+            TotalPages = (int)(Math.Ceiling(Num));
+            
+            CurrentPage = TotalPages;
+            
+            TheseSuppliers = await repo.Suppliers.GetAllSuppliersDetailedAsync(CurrentPage, PageSize);
+            
+            await repo.CompleteAsync();
+            repo.Dispose(); 
+        }
+        
+        StateHasChanged();
+    }
+}

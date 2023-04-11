@@ -1,0 +1,175 @@
+@page "/Categories"
+
+@using Microsoft.EntityFrameworkCore
+@inject IDbContextFactory<BarContext> MyFactory
+@inject NavigationManager Navigation
+
+<PageTitle>Categories</PageTitle>
+
+<Options 
+    Title=@Title Icon=@Icon 
+    Url=@Url UrlCaption=@UrlCaption 
+    CreateUrl=@CreateUrl SubTitle=@SubTitle 
+    UrlCaptionIcon=@UrlCaptionIcon OptionIcon=@OptionIcon
+    NextPage=@NextPage PreviousPage=@PreviousPage
+    FirstPage=@FirstPage LastPage=@LastPage
+    CurrentPage=@CurrentPage TotalPages=@TotalPages
+/>
+ 
+<div class="row bg-white p-3" style="min-height:75vh !important;">
+    <div class="col-12">
+        <div class="row  txtshadow shadow-sm bg-unique text-white">
+            <div class="col-1 text-center py-3 fw-bolder">#</div>
+            <div class="col-md-3 col-5 py-3 text-start ">Category</div>
+            <div class="col-md-2 col-2 py-3 text-center ">Items</div>
+            <div class="col-md-2 col-2 py-3 text-center ">Brands</div>
+            <div class="col-md-2 d-none d-md-block py-3 ">Reg Date</div>
+            <div class="col-2 py-3 text-center">Action</div>
+        </div>
+        @{
+                if(!TheseCategories.Any()){
+                <div class="container text-center">
+                    <p class="p-3  fs-4 text-unique fw-lighter opacity-75">-- : --</p>
+                </div>
+            }
+            else{
+                foreach(var item in TheseCategories){
+                    <div class="row text-unique border-bottom">
+                        <div class="col-1 text-center txtshadow py-2">@(item.CategoryId)</div>
+                        <div class="col-md-3 col-5  py-1 text-start ">
+                            <a href="Categories/Detail/@item.CategoryId" class="p-0 m-0">
+                                <ul class="p-0 m-0 d-flex flex-column text-center">
+                                    <li class="p-0 m-0 text-start text-primary text-capitalize">@(item.CategoryCaption.Length > 16 ? (item.CategoryCaption).Substring(0,13) + ".." : item.CategoryCaption )</li>
+                                    <li class=" m-0 opacity-75 " style="font-size:0.8rem !important; width:fit-content;">@(item.CategoryCode + item.CategoryId)</li>
+                                </ul>
+                            </a>
+                        </div>
+                        <div class="col-md-2 col-2 py-2 text-center ">@item.Product.Count</div>
+                        <div class="col-md-2 col-2 py-2 text-center ">
+                            @{  
+                                @((item.Product)
+                                    .GroupBy(a => a.Brand).Select(b => new{
+                                        Brand = b.Key,
+                                }).ToList().Count);
+                            }
+                            
+                        </div>
+                        <div class="col-md-2 d-none d-md-block py-1 text-unique text-start">
+                            <ul class="p-0 m-0 d-flex flex-column text-center">
+                                <li class="p-0 m-0 text-start text-unique text-capitalize">@(item.CategoryDateCreated.ToString("dd MMM yy"))</li>
+                                <li class=" m-0 opacity-75 " style="font-size:0.8rem !important; width:fit-content;">@(item.CategoryDateCreated.ToString("ddd, hh : mm"))</li>
+                            </ul>
+                        </div>
+                        <div class="col-2 px-0 text-center" style="padding-top:0.8rem !important;">
+                            <a href="Categories/Edit/@item.CategoryId" class=" text-primary px-md-3 px-2 py-1 border border-2 " style="width:fit-content; margin:1px auto;">Edit</a>
+                        </div>
+                    </div>
+                }
+            }
+        }
+    </div>
+</div>
+
+@code{
+    public string Title = "Categories";
+    public string Icon = "columns-gap";
+    public string OptionIcon = "view-stacked";
+    public string SubTitle = "List view";
+    public string Url = "Categories/Detail/0";
+    public string UrlCaption = "Detail View";
+    public string UrlCaptionIcon = "ui-checks-grid";
+    public string CreateUrl = "Categories/Create";
+    
+    
+        
+    // Data Variables
+    private List<Category> TheseCategories = new();
+    private int CurrentPage = 0;
+    private int PageSize = 10;
+    private int TotalPages = 1;
+    
+    protected override async Task OnInitializedAsync(){
+        
+        await base.OnInitializedAsync();
+        await NextPage();
+    }
+    
+    private async Task NextPage(){
+        using(var repo = new UnitOfWork(MyFactory.CreateDbContext())){
+            
+            double Num = (double)(repo.Categories.GetNoRecords())/PageSize;
+            TotalPages = (int)(Math.Ceiling(Num));
+            
+            if(CurrentPage < TotalPages ){
+               CurrentPage ++ ;
+            }
+            else{
+                CurrentPage = TotalPages; 
+            }
+            
+            TheseCategories = await repo.Categories.GetAllCategoriesDetailedAsync(CurrentPage, PageSize);
+            
+            await repo.CompleteAsync();
+            repo.Dispose(); 
+        }
+        
+        StateHasChanged();
+    }
+    
+    private async Task PreviousPage(){
+        using(var repo = new UnitOfWork(MyFactory.CreateDbContext())){
+            
+            double Num = (double)(repo.Categories.GetNoRecords())/PageSize;
+            TotalPages = (int)(Math.Ceiling(Num));
+            
+            if(CurrentPage > 1 ){
+               CurrentPage -- ;
+            }
+            else{
+                CurrentPage = 1; 
+            }
+            
+            TheseCategories = await repo.Categories.GetAllCategoriesDetailedAsync(CurrentPage, PageSize);
+            
+            await repo.CompleteAsync();
+            repo.Dispose(); 
+        }
+        
+        StateHasChanged();
+    }
+    
+    private async Task FirstPage(){
+        using(var repo = new UnitOfWork(MyFactory.CreateDbContext())){
+            
+            double Num = (double)(repo.Categories.GetNoRecords())/PageSize;
+            TotalPages = (int)(Math.Ceiling(Num));
+            
+            CurrentPage = 1;
+            
+            TheseCategories = await repo.Categories.GetAllCategoriesDetailedAsync(CurrentPage, PageSize);
+            
+            await repo.CompleteAsync();
+            repo.Dispose(); 
+        }
+        
+        StateHasChanged();
+    }
+    
+    private async Task LastPage(){
+        using(var repo = new UnitOfWork(MyFactory.CreateDbContext())){
+            
+            double Num = (double)(repo.Categories.GetNoRecords())/PageSize;
+            TotalPages = (int)(Math.Ceiling(Num));
+            
+            CurrentPage = TotalPages;
+            
+            TheseCategories = await repo.Categories.GetAllCategoriesDetailedAsync(CurrentPage, PageSize);
+            
+            await repo.CompleteAsync();
+            repo.Dispose(); 
+        }
+        
+        StateHasChanged();
+    }
+    
+}

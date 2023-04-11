@@ -1,0 +1,394 @@
+<div class="p-0 m-0 pt-md-0 pt-5">
+    <div class="row pt-md-3 pt-5 mt-md-0 mt-5  px-md-0 px-2">
+        <div class="col-lg-7 col-12 text-lg-start text-center pt-1 px-0">
+            <ul class="d-flex flex-row justify-content-md-start justify-content-center p-0 m-0">
+                <li class="p-0 m-0">
+                    <h4 classs=" fs-4 fw-bolder m-0"><i class="fs-5 bi-@Icon m-0 me-1"></i></h4>
+                </li>
+                <li class="p-0 m-0">
+                    <h4 classs=" fs-5 fw-bolder d-none d-md-block txtshadow text-unique fw-bolder m-0">@Title Management.</h4>
+                </li>
+            </ul>
+            
+            @{
+                if(AddOrUpdateItem){
+                    <ul class=" m-0 p-0 text-muted text-start">
+                        <li class="m-0 p-0 ps-3 text-muted rounded-0 ms-1 ">
+                            <i class="bi bi-caret-right-fill m-0 "style="font-size:0.8rem"></i> @(AddOrUpdateThisItem)
+                        </li>
+                    </ul>
+                }else if(WeProduct){
+                    <ul class="d-flex flex-row justify-content-between justify-content-md-start m-0 p-0 pb-2 text-muted opacity-75 fw-bolder" style="font-size:0.85rem !important;">
+                        <ul class="d-flex flex-row p-0 m-0 ">
+                            <li class="me-2">
+                                <div class="form-floating rounded-0">
+                                    <input @bind="TimeLine" type="date" required class="form-control bg-white border-0 text-unique fw-bolder rounded-0 text-capitalize " id="floatingInput" style="font-size:0.85rem;" />
+                                    <label for="floatingInput">
+                                        From
+                                    </label>
+                                </div>
+                            </li>
+                            <li>
+                                <div class="form-floating rounded-0">
+                                    <input @bind="TimeLine" type="date" required class="form-control bg-white border-0 text-unique fw-bolder rounded-0 text-capitalize " id="floatingInput" style="font-size:0.85rem;" />
+                                    <label for="floatingInput">
+                                        T0
+                                    </label>
+                                </div>
+                            </li>
+                        </ul>
+                        <ul class=" m-0 p-0 pt-3 text-muted text-start">
+                            <li class="p-0 px-2 rounded-0 ms-3  " style="">TSTCK[PCS] : @WeRealStock.ToString("n0")</li>
+                            <li class="P-0 px-2 rounded-0 ms-3  ">TC0ST[TAX] : @WeCost.ToString("n0") Tzs</li>
+                        </ul>
+                        <ul class=" m-0 p-0 pt-3 text-muted">
+                            <li class="P-0 px-2 rounded-0 ms-4  ">TRETAIL[TAX] : @WeRetail.ToString("n0") Tzs</li>
+                            <li class="P-0 px-2 rounded-0 ms-4  ">RETURN[TAX] : @((WeRetail - WeCost).ToString("n0") + " Tzs")</li>
+                        </ul>
+                    </ul>
+                }else if(WeSale){
+                    <ul class="d-flex flex-row justify-content-md-start justify-content-center flex-wrap m-0 p-0 pb-2 text-muted opacity-75 fw-bolder" style="font-size:0.85rem !important;">
+                        <ul class=" m-0 p-0 text-muted text-start">
+                            <li class="m-0 p-0 rounded-0  " style="">
+                                <div class="form-floating rounded-0">
+                                    <input style=" font-size : 0.85rem !important" type="date" class="form-control bg-white py-0 pt-2 pb-0 border-0 text-unique fw-bolder rounded-0 my-0 text-capitalize " id="floatingInput" placeholder="Product Name (Caption / Short Description)" />
+                                    <label class="" for="floatingInput">
+                                        From
+                                    </label>
+                                </div>
+                            </li>
+                        </ul>
+                        <ul class=" m-0 p-0 text-muted text-start">
+                            <li class="m-0 p-0 px-2 rounded-0 ms-3  " style="">
+                                <div class="form-floating rounded-0">
+                                    <input style=" font-size : 0.85rem !important" type="date" class="form-control bg-white py-0 pt-2 pb-0 border-0 text-unique fw-bolder rounded-0 my-0 text-capitalize " id="floatingInput" placeholder="Product Name (Caption / Short Description)" />
+                                    <label for="floatingInput" class="">
+                                        To
+                                    </label>
+                                </div>
+                            </li>
+                        </ul>
+                        <ul class=" m-0 p-0 text-muted text-start">
+                            <li class="p-0 px-2 rounded-0 ms-3  " style=" font-size : 0.75rem !important">TOTAL SALE[TAX] : @WeTotalSale.ToString("n0") Tzs</li>
+                            <li class="P-0 px-2 rounded-0 ms-3  " style=" font-size : 0.75rem !important">TOTAL C0ST[TAX] : @WeTotalCost.ToString("n0") Tzs</li>
+                        </ul>
+                        <ul class=" m-0 p-0 text-muted text-start">
+                            <li class="P-0 px-2 rounded-0 ms-3  " style=" font-size : 0.75rem !important">TOTAL RETURN[TAX] : @WeTotalCost.ToString("n0") Tzs</li>
+                            <li class="p-0 px-2 rounded-0 ms-3  " style=" font-size : 0.75rem !important">ITEMS [PCS] : @WeTotalSale Pcs</li>
+                        </ul>
+                    </ul>
+                }
+                else if(SingleProduct){
+                    <ul class="d-flex flex-row justify-content-center justify-content-md-start m-0 p-0 pt-2 text-muted">
+                        <ul class=" m-0 p-0 text-muted text-start">
+                            <li class="p-0 px-2 rounded-0 ms-3"><i class="fs-6 bi-upc"></i> PID</li>
+                            <li class="P-0 px-3 rounded-0 ms-3 opacity-75 "></li>
+                        </ul>
+                        <ul class=" m-0 p-0 text-muted">
+                            <li class=" rounded-0 ms-1 display-6 ">@RealPid</li>
+                        </ul>
+                    </ul>
+                }else if(SinglePurchase){
+                    <ul class="d-flex flex-row justify-content-center justify-content-md-start m-0 p-0 pt-2 text-muted">
+                        <ul class=" m-0 p-0 text-muted text-start">
+                            <li class="p-0 px-2 rounded-0 ms-3"><i class="fs-6 bi-upc"></i> GID</li>
+                            <li class="P-0 px-3 rounded-0 ms-3 opacity-75 "></li>
+                        </ul>
+                        <ul class=" m-0 p-0 text-muted">
+                            <li class=" rounded-0 ms-1 display-6 ">@RealGid</li>
+                        </ul>
+                    </ul>
+                }else if(SinglePrice){
+                    <ul class="d-flex flex-row justify-content-center justify-content-md-start m-0 p-0 pt-2 text-muted">
+                        <ul class=" m-0 p-0 text-muted text-start">
+                            <li class="p-0 px-2 rounded-0 ms-3"><i class="fs-6 bi-upc"></i> PRC</li>
+                            <li class="P-0 px-3 rounded-0 ms-3 opacity-75 "></li>
+                        </ul>
+                        <ul class=" m-0 p-0 text-muted">
+                            <li class=" rounded-0 ms-1 display-6 ">@RealPrc</li>
+                        </ul>
+                    </ul>
+                }else if(SingleStkAdj){
+                    <ul class="d-flex flex-row justify-content-center justify-content-md-start m-0 p-0 pt-2 text-muted">
+                        <ul class=" m-0 p-0 text-muted text-start">
+                            <li class="p-0 px-2 rounded-0 ms-3"><i class="fs-6 bi-upc"></i> SID</li>
+                            <li class="P-0 px-3 rounded-0 ms-3 opacity-75 "></li>
+                        </ul>
+                        <ul class=" m-0 p-0 text-muted">
+                            <li class=" rounded-0 ms-1 display-6 ">@RealSid</li>
+                        </ul>
+                    </ul>
+                }else if(SingleOpen){
+                    <ul class="d-flex flex-row justify-content-center justify-content-md-start m-0 p-0 pt-2 text-muted">
+                        <ul class=" m-0 p-0 text-muted text-start">
+                            <li class="p-0 px-2 rounded-0 ms-3"><i class="fs-6 bi-upc"></i> OID</li>
+                            <li class="P-0 px-3 rounded-0 ms-3 opacity-75 "></li>
+                        </ul>
+                        <ul class=" m-0 p-0 text-muted">
+                            <li class=" rounded-0 ms-1 display-6 ">@RealOid</li>
+                        </ul>
+                    </ul>
+                }else if(SingleSupplier){
+                    <ul class="d-flex flex-row justify-content-center justify-content-md-start m-0 p-0 pt-2 text-muted">
+                        <ul class=" m-0 p-0 text-muted text-start">
+                            <li class="p-0 px-2 rounded-0 ms-3"><i class="fs-6 bi-upc"></i> SUID</li>
+                            <li class="P-0 px-3 rounded-0 ms-3 opacity-75 "></li>
+                        </ul>
+                        <ul class=" m-0 p-0 text-muted">
+                            <li class=" rounded-0 ms-1 display-6 ">@RealSuid</li>
+                        </ul>
+                    </ul>
+                }else if(SingleBrand){
+                    <ul class="d-flex flex-row justify-content-center justify-content-md-start m-0 p-0 pt-2 text-muted">
+                        <ul class=" m-0 p-0 text-muted text-start">
+                            <li class="p-0 px-2 rounded-0 ms-3"><i class="fs-6 bi-upc"></i> BID</li>
+                            <li class="P-0 px-3 rounded-0 ms-3 opacity-75 "></li>
+                        </ul>
+                        <ul class=" m-0 p-0 text-muted">
+                            <li class=" rounded-0 ms-1 display-6 ">@RealBid</li>
+                        </ul>
+                    </ul>
+                }else if(SingleCategory){
+                    <ul class="d-flex flex-row justify-content-center justify-content-md-start m-0 p-0 pt-2 text-muted">
+                        <ul class=" m-0 p-0 text-muted text-start">
+                            <li class="p-0 px-2 rounded-0 ms-3"><i class="fs-6 bi-upc"></i> CID</li>
+                            <li class="P-0 px-3 rounded-0 ms-3 opacity-75 "></li>
+                        </ul>
+                        <ul class=" m-0 p-0 text-muted">
+                            <li class=" rounded-0 ms-1 display-6 ">@RealCid</li>
+                        </ul>
+                    </ul>
+                }else if(SingleTax){
+                    <ul class="d-flex flex-row justify-content-center justify-content-md-start m-0 p-0 pt-2 text-muted">
+                        <ul class=" m-0 p-0 text-muted text-start">
+                            <li class="p-0 px-2 rounded-0 ms-3"><i class="fs-6 bi-upc"></i> TXID</li>
+                            <li class="P-0 px-3 rounded-0 ms-3 opacity-75 "></li>
+                        </ul>
+                        <ul class=" m-0 p-0 text-muted">
+                            <li class=" rounded-0 ms-1 display-6 ">@RealTx</li>
+                        </ul>
+                    </ul>
+                }else if(SingleDay){
+                    <ul class="d-flex flex-row justify-content-evenly justify-content-md-start m-0 p-0 text-muted">
+                        <ul class=" m-0 p-0 text-muted">
+                            <li class=" rounded-0 ms-1 m-0 p-0" style="font-size:1.5rem">@SingleDate.ToString("dddd").</li>
+                            <li class="p-0 m-0 rounded-0 ms-2">@SingleDate.ToString("dd MMM yy")</li>
+                        </ul>
+                        <ul class="d-flex flex-column p-0 m-0 pt-2">
+                            <li class="P-0 px-2 rounded-0 ms-3 " style="font-size:0.8rem">
+                                <ul class="d-flex flex-row p-0 m-0">
+                                    <li class="p-0 m-0 pe-1 d-none d-md-block">SALES [TAX] :</li>
+                                    <li class="p-0 m-0 text-primary opacity-75 fw-bolder">1,000,000 Tzs</li>
+                                </ul>
+                            </li>
+                            <li class="P-0 px-2 rounded-0 ms-3 opacity-75 " style="font-size:0.8rem">
+                                <ul class="d-flex flex-row p-0 m-0">
+                                    <li class="p-0 m-0 pe-1 d-none d-md-block">COST [TAX] :</li>
+                                    <li class="p-0 m-0">450,000 Tzs</li>
+                                </ul>
+                            </li>
+                        </ul>
+                        <ul class="d-flex flex-column p-0 m-0 pt-2">
+                            <li class="P-0 px-2 rounded-0 ms-3 " style="font-size:0.8rem">
+                                <ul class="d-flex flex-row p-0 m-0">
+                                    <li class="p-0 m-0 pe-1 d-none d-md-block">RETURN [TAX] :</li>
+                                    <li class="p-0 m-0 ">550,000 Tzs</li>
+                                </ul>
+                            </li>
+                            <li class="P-0 px-2 rounded-0 ms-3 opacity-75 " style="font-size:0.8rem">
+                                <ul class="d-flex flex-row p-0 m-0">
+                                    <li class="p-0 m-0 pe-1 d-none d-md-block">ITEMS :</li>
+                                    <li class="p-0 m-0">45 Pcs</li>
+                                </ul>
+                            </li>
+                        </ul>
+                    </ul>
+                }
+            }
+            
+        </div>
+        <div class="col-lg-5 col-12 mb-3 px-0">
+            <div class="row p-0 m-0 my-2">
+                <div class="col-12 p-0 m-0">
+                    <ul class="d-flex flex-row justify-content-center justify-content-md-end m-0 p-0 ">
+                        
+                        @{
+                            if(ShowSaveButton){
+                                <button @onclick="ProcessAndSave" class="btn btn-success btn-md mx-3 my-0 py-1 rounded-0">Save</button>
+                            }
+                        }
+                        
+                        <a href=@(EditUrl) class="p-1 px-2 rounded-0 @FungaEdit ms-3 txtshadow border border-2 "><i class="bi bi-pencil-square txtshadow "></i></a>
+                        <a href=@(Url) class="p-1 px-2 rounded-0  txtshadow border border-2 ms-3 "><i class="bi bi-@UrlCaptionIcon txtshadow "></i></a>
+                        <a href=@(CreateUrl) class="p-1 px-2 rounded-0 @Funga ms-3 txtshadow border border-2 "><i class="bi bi-plus-circle txtshadow "></i></a>
+                        <a href="" class="px-2 @Funga py-1 ms-3 rounded-0 txtshadow border border-2"><i class="bi bi-upc-scan txtshadow fs-6 "></i></a>
+                        <a href="" class="px-2 @Funga py-1 ms-3 rounded-0 txtshadow border border-2 "><i class="bi bi-file-pdf txtshadow fs-6 "></i></a>
+                        <a href="" class="px-2 @Funga py-1 ms-3 rounded-0 txtshadow border border-2"><i class="bi bi-file-text txtshadow fs-6 "></i></a>
+                    </ul>
+                </div>
+            </div>
+            <div class="m-0 my-3 my-md-2 d-md-none d-block border-top border-1 "></div>
+            <div class="row p-0 m-0">
+                <div class="col-12 p-0 m-0">
+                    <ul class="d-flex flex-row justify-content-center justify-content-md-end m-0 p-0 @Funga flex-wrap ">
+                        <li @onclick=@PreviousPage class="btn m-0  px-3 py-1 rounded-0  me-3 txtshadow  bg-unique text-white "><i class="bi bi-arrow-left-circle txtshadow text-white "></i></li>
+                        <li @onclick=@FirstPage class="btn m-0 fw-bolder opacity-75 my-0 px-3 py-1 rounded-0  me-3 txtshadow border border-2 ">First</li>
+                        <li class="px-3 py-1 rounded-0 opacity-75 txtshadow border border-2 ">@CurrentPage/@TotalPages </li>
+                        <li @onclick=@LastPage class="btn m-0 opacity-75 fw-bolder my-0 px-3 py-1 rounded-0  ms-3 txtshadow border border-2 ">Last</li>
+                        <li @onclick=@NextPage class="btn m-0 px-3 py-1 rounded-0  ms-3 txtshadow  bg-unique text-white "><i class="bi bi-arrow-right-circle txtshadow text-white "></i>  </li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@code{
+    [Parameter]
+    public string Title{get;set;}
+    
+    [Parameter]
+    public string SubTitle{get;set;} = "";
+    
+    [Parameter]
+    public string Icon{get;set;}
+    
+    [Parameter]
+    public string OptionIcon{get;set;}
+    
+    [Parameter]
+    public string Url{get;set;}
+     
+    [Parameter]
+    public string UrlCaption{get;set;} = "Detail View";
+    
+    [Parameter]
+    public string UrlCaptionIcon{get;set;} = "";
+    
+    [Parameter]
+    public string CreateUrl{get;set;}
+    
+    [Parameter]
+    public string EditUrl{get;set;}
+    
+    // Pagination
+    [Parameter]
+    public EventCallback<MouseEventArgs> PreviousPage {get; set;}
+    
+    [Parameter]
+    public EventCallback<MouseEventArgs> NextPage {get; set;}
+    
+    [Parameter]
+    public EventCallback<MouseEventArgs> FirstPage {get; set;}
+    
+    [Parameter]
+    public EventCallback<MouseEventArgs> LastPage {get; set;}
+    
+    [Parameter]
+    public bool ShowSaveButton{get;set;} = false;
+    
+    [Parameter]
+    public EventCallback<MouseEventArgs> ProcessAndSave {get; set;}
+    
+    [Parameter]
+    public int CurrentPage {get;set;}
+    
+    [Parameter]
+    public int TotalPages {get;set;}
+    
+    [Parameter]
+    public string Funga{get;set;}
+    
+    [Parameter]
+    public string FungaEdit{get;set;} = "d-none";
+    
+    // LIST VIEW PRODUCT PAGE TOP INFO
+    [Parameter]
+    public bool WeProduct{get;set;} = false;
+    [Parameter]
+    public DateTime TimeLine{get;set;} = DateTime.Today;
+    [Parameter]
+    public int WeRealStock{get;set;} = 0;
+    [Parameter]
+    public double WeRetail{get;set;} = 0.0;
+    [Parameter]
+    public double WeCost{get;set;} = 0.0;
+    
+    // LIST VIEW SALE PAGE TOP INFO
+    [Parameter]
+    public bool WeSale{get;set;} = false;
+    [Parameter]
+    public double WeTotalSale{get;set;} = 0.0;
+    [Parameter]
+    public double WeTotalCost{get;set;} = 0.0;
+
+    
+    // DETAIL VIEW PAGE TOP INFO
+    [Parameter]
+    public bool SingleProduct{get;set;} = false;
+    
+    [Parameter]
+    public int RealPid {get;set;} = 0;
+    
+    [Parameter]
+    public bool SinglePurchase{get;set;} = false;
+    
+    [Parameter]
+    public int RealGid {get;set;} = 0;
+    
+    [Parameter]
+    public bool SingleStkAdj{get;set;} = false;
+    
+    [Parameter]
+    public int RealSid {get;set;} = 0;
+    
+    [Parameter]
+    public bool SinglePrice{get;set;} = false;
+    
+    [Parameter]
+    public int RealPrc {get;set;} = 0;
+    
+    [Parameter]
+    public bool SingleOpen{get;set;} = false;
+    
+    [Parameter]
+    public int RealOid {get;set;} = 0;
+    
+    [Parameter]
+    public bool SingleBrand{get;set;} = false;
+    
+    [Parameter]
+    public int RealBid {get;set;} = 0;
+    
+    [Parameter]
+    public bool SingleCategory{get;set;} = false;
+    
+    [Parameter]
+    public int RealCid {get;set;} = 0;
+    
+    [Parameter]
+    public bool SingleSupplier{get;set;} = false;
+    
+    [Parameter]
+    public int RealSuid {get;set;} = 0;
+    
+    [Parameter]
+    public bool SingleTax{get;set;} = false;
+    
+    [Parameter]
+    public int RealTx {get;set;} = 0;
+    
+    [Parameter]
+    public bool AddOrUpdateItem{get;set;} = false;
+    
+    [Parameter]
+    public string? AddOrUpdateThisItem {get;set;} = null;
+    
+    [Parameter]
+    public bool SingleDay{get;set;} = false;
+    
+    [Parameter]
+    public DateTime SingleDate{get;set;} = DateTime.Now;
+    
+    
+}

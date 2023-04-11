@@ -1,0 +1,203 @@
+@page "/Purchases"
+
+@using Microsoft.EntityFrameworkCore
+@inject IDbContextFactory<BarContext> MyFactory
+@inject NavigationManager Navigation
+
+<PageTitle>Purchases</PageTitle>
+
+<Options 
+    Title=@Title Icon=@Icon 
+    Url=@Url UrlCaption=@UrlCaption 
+    CreateUrl=@CreateUrl SubTitle=@SubTitle 
+    UrlCaptionIcon=@UrlCaptionIcon OptionIcon=@OptionIcon
+    NextPage=@NextPage PreviousPage=@PreviousPage
+    FirstPage=@FirstPage LastPage=@LastPage
+    CurrentPage=@CurrentPage TotalPages=@TotalPages
+/>
+
+<div class="row bg-white p-3" style="min-height:75vh !important;">
+    <div class="col-12">
+        <div class="row text-white  shadow-sm txtshadow bg-unique">
+            <div class="col-1 text-center py-3 fw-bolder">#</div>
+            <div class="col-md-2 col-3 py-3 text-start">#Receipt</div>
+            <div class="col-lg-1 d-none d-lg-block py-3 text-center ">Items</div>
+            <div class="col-lg-1 d-none d-lg-block py-3 text-center">Pcs</div>
+            <div class="col-md-2 col-4 py-3 text-start">Total Cost</div>
+            <div class="col-lg-2 col-md-3 d-none d-md-block py-3 text-start">Supplier | Code</div>
+            <div class="col-md-1 col-4 py-3 text-start">Date</div>
+            <div class="col-md-2 d-none d-md-block py-3 text-start">By</div>
+        </div>
+        @{
+            if(!TheseGrns.Any()){
+                <div class="container text-center">
+                    <p class="p-3  fs-4 text-unique fw-lighter opacity-75 text-capitalize">-- : --</p>
+                </div>
+            }
+            else{
+                foreach(var item in TheseGrns){
+                    FullCost = 0.0;
+                    GetFullPurchaseCost(item);
+                    <div class="row text-unique border-bottom">
+                        <div class="col-1 text-center py-2">@(item.GrnId)</div>
+                        <div class="col-md-2 col-3 py-1 ">
+                            <a href="Purchases/Detail/@item.GrnId" class="p-0 m-0">
+                                <ul class="p-0 m-0 d-flex flex-column text-center">
+                                    <li class="p-0 m-0 text-primary text-start">@(item.GrnCode + item.GrnId)</li>
+                                    <li class="  m-0 opacity-75 " style="font-size:0.8rem !important; width:fit-content;">@(item.GrnReceiptCode.Length > 10 ? item.GrnReceiptCode.Substring(0,8) + " .." : item.GrnReceiptCode)</li>
+                                </ul>
+                            </a>
+                        </div>
+                        <div class="col-lg-1 d-none d-lg-block text-unique py-2 text-center ">
+                            @item.ProductGrn.Count
+                        </div>
+                        <div class="col-lg-1 d-none d-lg-block py-2 text-center">
+                            @item.ProductGrn.Sum(x => x.ProductItemQty)
+                        </div>
+                        <div class="col-md-2 col-4 text-start py-2 ">
+                            @FullCost.ToString("n0")
+                        </div>
+                        <div class="col-lg-2 col-md-3 d-none d-md-block py-1 ">
+                            <a href="Suppliers/Detail/@item.SupplierId" class="p-0 m-0">
+                                <ul class="p-0 m-0 d-flex flex-column text-start">
+                                    <li class="p-0 m-0 text-primary opacity-75 text-capitalize">@(item.Supplier.SupplierName.Length > 17 ? item.Supplier.SupplierName.Substring(0,15) + " .." : item.Supplier.SupplierName)</li>
+                                    <li class="  m-0 opacity-75" style="font-size:0.8rem !important; width:fit-content;">@(item.Supplier.SupplierCode + item.Supplier.SupplierId)</li>
+                                </ul>
+                            </a>
+                        </div>
+                        <div class="col-md-1 col-4 py-1 px-0  text-unique">
+                            <ul class="p-0 m-0 d-flex flex-column text-start">
+                                <li class="p-0 m-0 text-unique text-capitalize">@(item.GrnDateCreated.ToString("dd MMM yy"))</li>
+                                <li class="  m-0 opacity-75" style="font-size:0.8rem !important; width:fit-content;">@(item.GrnDateCreated.ToString("ddd hh : mm"))</li>
+                            </ul>
+                        </div>
+                        <div class="col-md-2 d-none d-md-block py-1 text-unique text-start text-capitalize">
+                            <ul class="p-0 m-0 d-flex flex-column text-start">
+                                <li class="p-0 m-0 text-unique text-capitalize">@(item.User.UserFirstName.Length > 15 ? item.User.UserFirstName.Substring(0,14) + " .." : item.User.UserFirstName)</li>
+                                <li class="  m-0 opacity-75" style="font-size:0.8rem !important; width:fit-content;">@item.User.UserAccessLevel</li>
+                            </ul>
+                        </div>
+                    </div>
+                }
+            }
+        }
+    </div>
+</div>
+
+
+
+
+@code{
+    public string Title = "Purchases";
+    public string Icon = "cart4";
+    public string OptionIcon = "view-stacked";
+    public string SubTitle = "List view";
+    public string Url = "Purchases/Detail/0";
+    public string UrlCaption = "Detail View";
+    public string UrlCaptionIcon = "ui-checks-grid";
+    public string CreateUrl = "Purchases/Create";
+
+// Data Variables
+    private List<Grn> TheseGrns = new();
+    private int CurrentPage = 0;
+    private int PageSize = 8;
+    private int TotalPages = 1;
+    private double FullCost = 0.0;
+    
+    protected override async Task OnInitializedAsync(){
+        
+        await base.OnInitializedAsync();
+        await NextPage();
+    }
+    
+    private async Task NextPage(){
+        using(var repo = new UnitOfWork(MyFactory.CreateDbContext())){
+            
+            double Num = (double)(repo.Grns.GetNoRecords())/PageSize;
+            TotalPages = (int)(Math.Ceiling(Num));
+            
+            if(CurrentPage < TotalPages ){
+               CurrentPage ++ ;
+            }
+            else{
+                CurrentPage = TotalPages; 
+            }
+            
+            TheseGrns = await repo.Grns.GetAllGrnsDetailedAsync(CurrentPage, PageSize);
+            
+            await repo.CompleteAsync();
+            repo.Dispose(); 
+        }
+        
+        StateHasChanged();
+    }
+    
+    private async Task PreviousPage(){
+        using(var repo = new UnitOfWork(MyFactory.CreateDbContext())){
+            
+            double Num = (double)(repo.Grns.GetNoRecords())/PageSize;
+            TotalPages = (int)(Math.Ceiling(Num));
+            
+            if(CurrentPage > 1 ){
+               CurrentPage -- ;
+            }
+            else{
+                CurrentPage = 1; 
+            }
+            
+            TheseGrns = await repo.Grns.GetAllGrnsDetailedAsync(CurrentPage, PageSize);
+            
+            await repo.CompleteAsync();
+            repo.Dispose(); 
+        }
+        
+        StateHasChanged();
+    }
+    
+    private async Task FirstPage(){
+        using(var repo = new UnitOfWork(MyFactory.CreateDbContext())){
+            
+            double Num = (double)(repo.Grns.GetNoRecords())/PageSize;
+            TotalPages = (int)(Math.Ceiling(Num));
+            
+            CurrentPage = 1;
+            
+            TheseGrns = await repo.Grns.GetAllGrnsDetailedAsync(CurrentPage, PageSize);
+            
+            await repo.CompleteAsync();
+            repo.Dispose(); 
+        }
+        
+        StateHasChanged();
+    }
+    
+    private async Task LastPage(){
+        using(var repo = new UnitOfWork(MyFactory.CreateDbContext())){
+            
+            double Num = (double)(repo.Grns.GetNoRecords())/PageSize;
+            TotalPages = (int)(Math.Ceiling(Num));
+            
+            CurrentPage = TotalPages;
+            
+            TheseGrns = await repo.Grns.GetAllGrnsDetailedAsync(CurrentPage, PageSize);
+            
+            await repo.CompleteAsync();
+            repo.Dispose(); 
+        }
+        
+        StateHasChanged();
+    }
+    
+    private async Task GetFullPurchaseCost(Grn ThisData){
+        using(var repo = new UnitOfWork(MyFactory.CreateDbContext())){
+            if(ThisData != null){
+                foreach(var xitem in ThisData.ProductGrn){
+                    FullCost += (double)((xitem.ProductItemQty) * (xitem.ProductItemCost));
+                }
+            }
+            
+            await repo.CompleteAsync();
+            repo.Dispose();
+        }
+    }
+}

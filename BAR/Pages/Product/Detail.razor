@@ -1,0 +1,538 @@
+@page "/Products/Detail/{Sn:int}"
+
+@using Microsoft.EntityFrameworkCore
+@inject IDbContextFactory<BarContext> MyFactory
+@inject NavigationManager Navigation
+
+<PageTitle>Products | @SubTitle</PageTitle>
+
+<Options 
+    Title=@Title Icon=@Icon Url=@Url UrlCaption=@UrlCaption 
+    CreateUrl=@CreateUrl SubTitle=@SubTitle UrlCaptionIcon=@UrlCaptionIcon 
+    OptionIcon=@OptionIcon
+    NextPage=@NextPage CurrentPage=@CurrentPage TotalPages=@TotalPages
+    PreviousPage=@PreviousPage FirstPage=@FirstPage LastPage=@LastPage
+    EditUrl=@EditUrl FungaEdit=@FungaEdit SingleProduct=true RealPid=@ThisProduct.ProductId
+/>
+
+@{
+    if(ThisProduct.ProductId < 1){
+        
+        <div class="container text-center">
+            <p class="p-3  fs-4 text-unique fw-lighter">..No Product To Display!</p>
+        </div>
+    }
+    else{   
+        RealStock = 0;
+        ItemCost = 0.0;
+        ItemTax = 0.0;
+        ItemRetail = 0.0;
+        
+        ItemRetail = (double)(ThisProduct.ProductPrice.Any() ? ThisProduct.ProductPrice.LastOrDefault().LatestPrice : 0.0);
+        ItemTax = (double)(ThisProduct.Tax != null ? (ThisProduct.Tax.TaxValue * 0.01) : 0.0);
+        RealStock = (int)((ThisProduct.ProductGrn.Any() ? ThisProduct.ProductGrn.Sum(a => a.ProductItemQty) : 0) + (int)(ThisProduct.StockAdjustmentProduct.Any() ? ThisProduct.StockAdjustmentProduct.Sum(b => b.QtyAdjusted) : 0) + (int)(ThisProduct.ProductOpen.Any() ? ThisProduct.ProductOpen.Sum(x => x.ProductItemQty) : 0))-(((ThisProduct.ProductBill.Any() ? ThisProduct.ProductBill.Sum(a => a.QtyPurchased) : 0)));
+        
+        if(ThisProduct.ProductGrn.Any()){
+            ItemCost = (double)ThisProduct.ProductGrn.Average(x => x.ProductItemCost);
+        }else if(ThisProduct.ProductOpen.Any()){
+            ItemCost = (double)ThisProduct.ProductOpen.Average(x => x.ProductItemCost);
+        }else{
+            ItemCost = 0.0;
+        }
+        
+        if(RealStock == 0){
+            Colours = "text-success";
+        }else if(RealStock < 0){
+            Colours = "text-danger";
+        }else{
+            Colours = "";
+        }
+        
+        <div class="row bg-white p-3" style="min-height:75vh !important;">
+            <div class="col-12 col-md-5 pt-0">
+                <div class="row text-start ">
+                    <div class=" col-lg-3 col-2 text-unique rounded-start p-0 m-0">
+                        <ul class="d-flex flex-row shadow-sm txtshadow  px-3 py-2 bg-unique m-0 mt-1" style="width:fit-content;">
+                            <li class="p-0 m-0 me-lg-2"><i class="fs-6 bi-stack text-white"></i></li>
+                            <li class="p-0 m-0 d-none d-lg-block "> Product</li>
+                        </ul>
+                    </div>
+                    <div class=" col-lg-9 col-10 rounded-end text-start">
+                        <p class=" p-2 border-2 border text-unique m-0 mt-1 text-capitalize" style="width:fit-content;">@ThisProduct.ProductCaption</p>
+                    </div>
+                </div>
+                <div class="row text-start ">
+                    <div class=" col-lg-3  col-2 p-0 m-0 text-unique rounded-start">
+                        <ul class="d-flex flex-row shadow-sm txtshadow  px-3 py-2 bg-unique text-white mt-1 m-0" style="width:fit-content;">
+                            <li class="p-0 m-0 me-lg-2">&#64;</li>
+                            <li class="p-0 m-0 d-none d-lg-block">Brand</li>
+                        </ul>
+                    </div>
+                    <div class=" col-lg-9 col-10 rounded-end text-start">
+                        <p class=" p-2 border border-2 text-unique m-0 mt-1 text-capitalize" style="width:fit-content;">@ThisProduct.Brand.BrandCaption</p>
+                    </div>
+                </div>
+                 <div class="row text-start ">
+                    <div class=" col-lg-3  col-2 p-0 m-0 text-unique rounded-start">
+                        <ul class="d-flex flex-row shadow-sm txtshadow  px-3 py-2 bg-unique text-white mt-1 m-0" style="width:fit-content;">
+                            <li class="p-0 m-0 me-lg-2">%</li>
+                            <li class="p-0 m-0 d-none d-lg-block">Tax</li>
+                        </ul>
+                    </div>
+                    <div class=" col-lg-9 col-10 rounded-end text-start">
+                        <p class=" p-2 border border-2 text-unique m-0 mt-1 text-capitalize" style="width:fit-content;">@(ThisProduct.Tax.TaxValue)% </p>
+                    </div>
+                </div>
+                <div class="row text-start ">
+                    <div class=" col-lg-3 col-2 p-0 m-0 text-unique rounded-start">
+                        <ul class="d-flex flex-row shadow-sm txtshadow  px-3 py-2 bg-unique m-0 mt-1" style="width:fit-content;">
+                            <li class="p-0 m-0 me-lg-2"><i class="fs-6 bi-upc-scan text-white"></i></li>
+                            <li class="p-0 m-0 d-none d-lg-block "> Barcodes</li>
+                        </ul>
+                    </div>
+                    <div class=" col-lg-9 col-10 rounded-end text-start">
+                        <p class=" p-2 border-2 border text-unique m-0 mt-1" style="width:fit-content;">@(ThisProduct.ProductBarcode.Any() ? ThisProduct.ProductBarcode.FirstOrDefault().BarcodeNumber : "--:--")</p>
+                    </div>
+                </div>
+                <div class="row text-start ">
+                    <div class=" col-lg-3 col-2 p-0 text-unique rounded-start">
+                        <ul class="d-flex flex-row shadow-sm txtshadow  px-3 py-2 bg-unique m-0 mt-1" style="width:fit-content;">
+                            <li class="p-0 m-0 me-lg-2"><i class="fs-6 bi-columns-gap text-white"></i></li>
+                            <li class="p-0 m-0 d-none d-lg-block "> Category</li>
+                        </ul>
+                    </div>
+                    <div class=" col-lg-9 col-10  rounded-end text-start">
+                        <p class=" p-2 border-2 border text-unique m-0 mt-1 text-capitalize" style="width:fit-content;">@ThisProduct.Category.CategoryCaption</p>
+                    </div>
+                </div>
+                <div class="row text-start txtshadow  mt-2 bg-unique shadow-sm text-white">
+                    <div class="col-12  py-3">
+                        Description
+                    </div>
+                </div>
+                <div class="row text-start  px-0 text-unique opacity-75">
+                    <div class="col-12 fw-bolder px-0">
+                    @**
+                        <ul class="d-flex flex-row p-0 m-0 justify-content-start flex-wrap" style="font-size:0.77rem;">
+                            @{
+                                if(ThisProduct.Specs == null ){
+                                    <p class="text-center fs-6 text-unique p-2 m-2  bg-blue text-primary text-capitalize">No Item Specs yet.</p>
+                                }
+                                else{
+                                    if(ThisProduct.Specs.Processor != null ){
+                                        <p class="p-2 border border-0   bg-blue me-1 my-0 mb-1 text-capitalize" style="width:fit-content;">
+                                            PROCESSOR : @ThisProduct.Specs.Processor
+                                        </p>
+                                    }
+                                    if(ThisProduct.Specs.Ram != null ){
+                                        <p class="p-2 border border-0   bg-blue me-1 my-0 mb-1 text-capitalize" style="width:fit-content;">
+                                            RAM[GB] : @ThisProduct.Specs.Ram
+                                        </p>
+                                    }
+                                    if(ThisProduct.Specs.StorageSize != null ){
+                                        <p class="p-2 border border-0   bg-blue me-1 my-0 mb-1 text-capitalize" style="width:fit-content;">
+                                            STORAGE[GB] : @ThisProduct.Specs.StorageSize @(ThisProduct.Specs.StorageType != null ? ThisProduct.Specs.StorageType : null)
+                                        </p>
+                                    }
+                                    if(ThisProduct.Specs.DisplayTypeSize != null ){
+                                        <p class="p-2 border border-0   bg-blue me-1 my-0 mb-1 text-capitalize" style="width:fit-content;">
+                                            DISPLAY : @ThisProduct.Specs.DisplayTypeSize
+                                        </p>
+                                    }
+                                    if(ThisProduct.Specs.Os != null ){
+                                        <p class="p-2 border border-0   bg-blue me-1 my-0 mb-1 text-capitalize" style="width:fit-content;">
+                                            OS : @ThisProduct.Specs.Os
+                                        </p>
+                                    }
+                                    if(ThisProduct.Specs.MemoryCard){
+                                        <p class="p-2 border border-0   bg-blue me-1 my-0 mb-1 text-capitalize" style="width:fit-content;">
+                                            MCARD : Yes
+                                        </p>
+                                    }
+                                    if(ThisProduct.Specs.Bluetooth){
+                                        <p class="p-2 border border-0 bg-blue me-1 my-0 mb-1 text-capitalize" style="width:fit-content;">
+                                            BLUETOOTH : Yes
+                                        </p>
+                                    }
+                                    
+                                    if(ThisProduct.Specs.WiFi){
+                                        <p class="p-2 border border-0 bg-blue me-1 my-0 mb-1 text-capitalize" style="width:fit-content;">
+                                            WiFi : Yes
+                                        </p>
+                                    }
+                                    if(ThisProduct.Specs.CableType != null ){
+                                        <p class="p-2 border border-0 bg-blue me-1 my-0 mb-1 text-capitalize" style="width:fit-content;">
+                                            Cable : @ThisProduct.Specs.CableType @(ThisProduct.Specs.CableLength + "M")
+                                        </p>
+                                    }
+                                    if(ThisProduct.Specs.SimCardSlots != null && ThisProduct.Specs.SimCardSlots != 0 ){
+                                        <p class="p-2 border border-0 bg-blue me-1 my-0 mb-1 text-capitalize" style="width:fit-content;">
+                                            SIMCARD : @ThisProduct.Specs.SimCardSlots
+                                        </p>
+                                    }
+                                }
+                            }
+                        </ul>
+                        *@
+                        @{
+                            if(ThisProduct.Specs != null && ThisProduct.Specs.SpecsDescription != null ){
+                                <div class="py-2 ps-2 mb-0 mt-0 border-top opacity-75 text-capitalize">
+                                    @(ThisProduct.Specs.SpecsDescription.Length > 55 ? ThisProduct.Specs.SpecsDescription.Substring(0,50) + " .." : ThisProduct.Specs.SpecsDescription)
+                                </div>
+                            }
+                        }
+                    </div>
+                </div>
+                <div class="row text-start txtshadow  mt-2 bg-unique shadow-sm text-white">
+                    <div class="col-3 text-start  py-3">
+                        Cost[W/TAX]
+                    </div>
+                    <div class="col-3 text-start  py-3">
+                        Retail[W/TAX]
+                    </div>
+                    <div class="col-3 text-start  py-3">
+                        Cost[TAX] 
+                    </div>
+                    <div class="col-3 text-start  py-3">
+                        Retail[TAX]
+                    </div>
+                </div>
+                <div class="row text-start bg-xs px-0 py-0  text-unique opacity-75">
+                    <div class="col-3 text-start py-2">
+                        <ul class=" m-0 p-0 text-start">
+                            <li class="p-0 ps-1 m-0 text-primary text-start txtshadow" style="font-size:0.85rem;">
+                                &#64; @(((ItemCost)-(ItemCost * ItemTax)).ToString("n0"))</li>
+                            <li class="p-0 ps-1 m-0 text-unique fw-bolder text-start" style="font-size:0.75rem;">&sum; @((RealStock * ((ItemCost) - (ItemCost * ItemTax))).ToString("n0"))</li>
+                        </ul> 
+                    </div>
+                    <div class="col-3 ps-3 text-start fw-bolder py-2 px-0">
+                        <ul class="p-0 m-0 d-flex flex-column justify-content-start">
+                            <li class="p-0 m-0 fw-bolder text-primary txtshadow" style="font-size:0.85rem;">&#64; @((ItemRetail - (ItemRetail * ItemTax)).ToString("n0"))</li>
+                            <li class="p-0 m-0 text-unique fw-bolder" style="font-size:0.75rem;">
+                                &sum;
+                                @(((ItemRetail - (ItemRetail * ItemTax)) * RealStock).ToString("n0"))
+                            </li>
+                        </ul> 
+                    </div>
+                    <div class="col-3 text-start py-2">
+                        <ul class=" m-0 p-0 text-start">
+                            <li class="p-0 ps-1 m-0 text-primary text-start txtshadow" style="font-size:0.85rem;">
+                                &#64; @((ItemCost).ToString("n0"))</li>
+                            <li class="p-0 ps-1 m-0 text-unique fw-bolder text-start" style="font-size:0.75rem;">&sum; @((RealStock * (ItemCost)).ToString("n0"))</li>
+                        </ul> 
+                    </div>
+                    <div class="col-3 ps-3 text-start fw-bolder py-2 px-0">
+                        <ul class="p-0 m-0 d-flex flex-column justify-content-start">
+                            <li class="p-0 m-0 fw-bolder text-primary txtshadow" style="font-size:0.85rem;">&#64; @ItemRetail.ToString("n0")</li>
+                            <li class="p-0 m-0 text-unique fw-bolder" style="font-size:0.75rem;">
+                                &sum;
+                                @((ItemRetail * RealStock).ToString("n0"))
+                            </li>
+                        </ul> 
+                    </div>
+                </div>
+                <div class="row bg-xs mt-2 mb-2 text-unique opacity-75 border-bottom">
+                    <div class="col-6 fw-bolder text-start pt-3 " style="font-size:0.8rem;">
+                        <ul class="p-0 m-0">
+                            <li class="text-primary opacity-75">Profit Margin</li>
+                            <li>@(((((ThisProduct.ProductPrice.Any() ? ThisProduct.ProductPrice.LastOrDefault().LatestPrice : 0.0) - ItemCost) / ItemCost) * 100).ToString("n1")) %</li>
+                        </ul>
+                    </div>
+                    <div class="col-3 pe-0 text-start py-3 "style="font-size:0.8rem;">
+                        CURRENT STOCK
+                    </div>
+                    <div class="col-3 pe-0 text-start py-2 ">
+                        <ul class="p-0 m-0 d-flex flex-row">
+                            <li class="display-6 p-0">@RealStock</li>
+                            <li class=" p-0 opacity-50 mt-4" style="font-size:0.7rem;">pcs</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+            <div class="col-12 col-md-7 ps-md-4">
+                <div class="row text-start txtshadow bg-unique shadow-sm text-white">
+                    <div class="col-6 py-3">
+                        <i class="fs-6 @TabIcon text-white"></i> @TabCaption
+                    </div>
+                    <div class="col-6 p-0">
+                        <ul class="d-flex flex-row justify-content-end p-0 m-0">
+                            <li @onclick=@(()=> SwitchToOpenTab()) class="btn py-3 text-white mx-lg-2 mx-1" href=""><i class="fs-6 bi-layers text-white"></i></li>
+                            <li @onclick=@(()=> SwitchToPurchaseTab()) class="btn py-3 text-white mx-lg-2 mx-1" href=""><i class="fs-6 bi-cart4 text-white"></i></li>
+                            <li @onclick=@(()=> SwitchToAdjustTab()) class="btn py-3 text-white mx-lg-2 mx-1" href=""><i class="fs-6 bi-toggles2 text-white"></i></li>
+                            <li @onclick=@(()=> SwitchToSoldTab()) class="btn py-3 text-white mx-lg-2 mx-1" href=""><i class="fs-6 bi-cart text-white"></i></li>
+                            <li @onclick=@(()=> SwitchToPriceTab()) class="btn py-3 text-white mx-lg-2 mx-1" href=""><i class="fs-6 bi-cash-coin text-white"></i></li>
+                        </ul>
+                    </div>
+                </div>
+                @*Start Dynamic Pages Purchase, Adjustments and Sales*@
+                    @{
+                        if(PurchaseTab){
+                            
+                            if(this.ThisProduct.ProductGrn != null && this.ThisProduct.ProductGrn.Count > 0){
+                                <Purchase ProductToCheck=@ThisProduct/>
+                            }
+                            else{
+                                <p class="fs-6 text-center text-muted opacity-75 py-3 px-5  bg-blue my-3 border border-0" style="width:fit-content; margin:1px auto;">No Purchase info</p>
+                                ThisProduct.ProductGrn = new();
+                            }
+                        }
+                        else 
+                        if(PriceTab){
+                        
+                            if(this.ThisProduct.ProductPrice != null && this.ThisProduct.ProductPrice.Count > 0){
+                                <ThePrice ProductToCheck=@ThisProduct/>
+                            }
+                            else{
+                                <p class="fs-6 text-center text-muted opacity-75 py-3 px-5  bg-blue my-3 border border-0" style="width:fit-content; margin:1px auto;">No Price info</p>
+                                ThisProduct.ProductPrice = new();
+                            }
+                        }
+                        else 
+                        if(OpenTab){
+                        
+                            if(this.ThisProduct.ProductOpen != null && this.ThisProduct.ProductOpen.Count > 0){
+                                <OpenStock ProductToCheck=@ThisProduct/>
+                            }
+                            else{
+                                <p class="fs-6 text-center text-muted opacity-75 py-3 px-5  bg-blue my-3 border border-0" style="width:fit-content; margin:1px auto;">No Open Stock info</p>
+                                ThisProduct.ProductOpen = new();
+                            }
+                        }
+                        else 
+                        if(SoldTab){
+                        
+                            if(this.ThisProduct.ProductBill != null && this.ThisProduct.ProductBill.Count > 0){
+                                <Sold ProductToCheck=@ThisProduct/>
+                            }
+                            else{
+                                <p class="fs-6 text-center text-muted opacity-75 py-3 px-5  bg-blue my-3 border border-0" style="width:fit-content; margin:1px auto;">No Sold Item</p>
+                                ThisProduct.ProductBill = new();
+                            }
+                        }
+                        else{
+                            
+                            if(this.ThisProduct.StockAdjustmentProduct != null && this.ThisProduct.StockAdjustmentProduct.Count > 0){
+                                <Stock ProductToCheck=@ThisProduct/>
+                            }
+                            else{
+                                <p class="fs-6 text-center text-muted opacity-75 py-3 px-5  bg-blue my-3 border border-0" style="width:fit-content; margin:1px auto;">No Stock Adjust info</p>
+                                ThisProduct.StockAdjustmentProduct = new();
+                            }
+                        }
+                    }
+                @*End Dynamic Pages Purchase, Adjustments and Sales*@
+            </div>
+        </div>
+    }
+}
+
+@code{
+    
+    [Parameter]
+    public int Sn{get;set;}
+    
+    //  Url Parameter Variables
+    public string Title = "Products";
+    public string SubTitle = "Detail view";
+    public string Icon = "stack";
+    public string Url = "Products";
+    public string UrlCaption = "List View";
+    public string UrlCaptionIcon = "view-stacked";
+    public string OptionIcon = "ui-checks-grid";
+    public string CreateUrl = "Products/Create";
+    public string EditUrl = "Products/Edit/2";
+    private string FungaEdit = "d-block";
+        
+    //  Pagination 
+    private int TotalPages = 1;
+    private int CurrentPage = 1;
+    private int PageSize = 1 ;
+        
+    //  Tabs Variables
+    private bool PurchaseTab = true;
+    private bool AdjustTab = false;
+    private bool PriceTab = false;
+    private bool OpenTab = false;
+    private bool SoldTab = false;
+    private string TabCaption = "Purchases";
+    private string TabIcon = "bi-cart4";
+    
+    //  Data
+    private Product ThisProduct = new();
+    private List<ProductGrn> TheseProductGrns = new();
+    private int RealStock = 0;
+    private double ItemRetail = 0.0;
+    private double ItemCost = 0.0;
+    private double ItemTax = 0.0;
+    private string Colours = "";
+    
+    protected override async Task OnInitializedAsync(){
+        await base.OnInitializedAsync();
+        Refresh();
+        await Start(Sn);
+    }
+        
+    private async Task Start(int Pid = 0){
+        Refresh();
+        using(var repo = new UnitOfWork(MyFactory.CreateDbContext())){
+            TotalPages = repo.Products.GetNoRecords();
+            
+            if(Pid < 1 && TotalPages > 0){
+                ThisProduct = (await repo.Products.GetAllProductsDetailedAsync(CurrentPage,1)).FirstOrDefault();
+                CurrentPage = ((repo.Products.GetIndexOf(ThisProduct)) + 1);
+                EditUrl = "Products/Edit/" + ThisProduct.ProductId ;
+            }
+            else if(Pid > 0 && Pid <= TotalPages){
+                ThisProduct = await repo.Products.GetDetailedProductAsync(Pid);
+                CurrentPage = ((repo.Products.GetIndexOf(ThisProduct)) + 1);
+                EditUrl = "Products/Edit/" + ThisProduct.ProductId ;
+            }
+            else{
+                Refresh();
+            }
+            
+            await repo.CompleteAsync();
+            repo.Dispose();  
+        }
+        StateHasChanged();
+    }
+    
+    private async Task NextPage(){
+        Refresh();
+        using(var repo = new UnitOfWork(MyFactory.CreateDbContext())){
+            TotalPages = repo.Products.GetNoRecords();
+            
+            if(CurrentPage < TotalPages ){
+                CurrentPage ++ ;
+            }
+            else{
+                CurrentPage = TotalPages; 
+            }
+            
+            ThisProduct = (await repo.Products.GetAllProductsDetailedAsync(CurrentPage,1)).SingleOrDefault();
+
+            await repo.CompleteAsync();
+            EditUrl = "Products/Edit/" + ThisProduct.ProductId ;
+            repo.Dispose();  
+        }
+        StateHasChanged();
+    }
+    
+    private async Task PreviousPage(){
+        Refresh();
+        using(var repo = new UnitOfWork(MyFactory.CreateDbContext())){
+            TotalPages = repo.Products.GetNoRecords();
+            
+            if(CurrentPage > 1 ){
+                CurrentPage -- ;
+            }
+            else{
+                CurrentPage = 1; 
+            }
+            
+            ThisProduct = (await repo.Products.GetAllProductsDetailedAsync(CurrentPage,1)).SingleOrDefault();
+
+            await repo.CompleteAsync();
+            EditUrl = "Products/Edit/" + ThisProduct.ProductId ;
+            repo.Dispose();  
+        }
+        StateHasChanged();
+    }
+    
+    private async Task FirstPage(){
+        Refresh();
+        using(var repo = new UnitOfWork(MyFactory.CreateDbContext())){
+            TotalPages = repo.Products.GetNoRecords();
+            CurrentPage = 1; 
+            ThisProduct = (await repo.Products.GetAllProductsDetailedAsync(CurrentPage,1)).SingleOrDefault();
+
+            await repo.CompleteAsync();
+            EditUrl = "Products/Edit/" + ThisProduct.ProductId ;
+            repo.Dispose();  
+        }
+        StateHasChanged();
+    }
+    
+    
+    private async Task LastPage(){
+        Refresh();
+        using(var repo = new UnitOfWork(MyFactory.CreateDbContext())){
+            TotalPages = repo.Products.GetNoRecords();
+            CurrentPage = TotalPages; 
+            ThisProduct = (await repo.Products.GetAllProductsDetailedAsync(CurrentPage,1)).SingleOrDefault();
+
+            await repo.CompleteAsync();
+            EditUrl = "Products/Edit/" + ThisProduct.ProductId ;
+            repo.Dispose();  
+        }
+        StateHasChanged();
+    }
+    
+    private void Refresh(){
+        ThisProduct = new();
+        ThisProduct.Category = new();
+        ThisProduct.Brand = new();
+        ThisProduct.User = new();
+        ThisProduct.Log = new();
+        ThisProduct.Specs = new();
+        ThisProduct.Tax = new();
+        ThisProduct.ProductPrice = new();
+        ThisProduct.ProductGrn = new();
+        ThisProduct.StockAdjustmentProduct = new();
+        ThisProduct.ProductOpen = new();
+        ThisProduct.ProductBill = new();
+    }
+    
+    private void SwitchToPurchaseTab(){
+        PurchaseTab = true;
+        AdjustTab = false;
+        PriceTab = false;
+        OpenTab = false;
+        SoldTab = false;
+        
+        TabCaption = "Purchases";
+        TabIcon = "bi-cart4";
+    }
+    
+    private void SwitchToPriceTab(){
+        PurchaseTab = false;
+        AdjustTab = false;
+        PriceTab = true;
+        OpenTab = false;
+        SoldTab = false;
+        
+        TabCaption = "Prices";
+        TabIcon = "bi-cash-coin";
+    }
+    
+    private void SwitchToAdjustTab(){
+        PurchaseTab = false;
+        AdjustTab = true;
+        PriceTab = false;
+        OpenTab = false;
+        SoldTab = false;
+        
+        TabCaption = "Adjustments";
+        TabIcon = "bi-toggles2";
+    }
+    private void SwitchToOpenTab(){
+        PurchaseTab = false;
+        OpenTab = true;
+        PriceTab = false;
+        AdjustTab = false;
+        SoldTab = false;
+        
+        TabCaption = "Open Stock";
+        TabIcon = "bi-layers";
+    }
+    private void SwitchToSoldTab(){
+        SoldTab = true;
+        AdjustTab = false;
+        PriceTab = false;
+        OpenTab = false;
+        PurchaseTab = false;
+        
+        TabCaption = "Sold";
+        TabIcon = "bi-cart";
+    }
+}

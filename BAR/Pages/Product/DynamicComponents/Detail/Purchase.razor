@@ -1,0 +1,149 @@
+<div class="row py-0 text-unique">
+    <div class="col-1 py-2 text-center">#</div>
+    <div class="col-lg-2 col-3 py-1 text-start text-unique">
+        <NavLink class="p-0 m-0 text-unique" href="" >
+            <ul class="d-flex flex-column justify-content-start m-0 p-0">
+                <li>GRN</li>
+                <li class=" p-0 opacity-75" style="font-size:0.7rem !important; width:fit-content;">Receipt</li>
+            </ul>
+        </NavLink>
+    </div>
+    <div class="col-lg-2 col-3 py-1 text-start text-unique">
+        <NavLink class="p-0 m-0 text-unique" href="" style="font-size:0.8rem !important;">
+            <ul class="d-flex flex-column justify-content-start m-0 p-0">
+                <li>&#64; Cost</li>
+                <li class=" p-0 opacity-75" style="font-size:0.7rem !important; width:fit-content;">&sum; Cost</li>
+            </ul>
+        </NavLink>
+    </div>
+    <div class=" col-lg-2 py-1 text-center text-unique d-none d-lg-block">
+        <ul class="d-flex flex-column justify-content-start m-0 p-0">
+            <li>Stock</li>
+            <li class="opacity-75" style="font-size:0.7rem !important;">Before</li>
+        </ul>
+    </div>
+    <div class=" col-lg-1 col-2 py-1 text-center text-unique">
+        <ul class="text-center m-0 p-0">
+            <li class="text-center">Stock</li>
+            <li class="opacity-75 text-center" style="font-size:0.7rem !important;">Purchased</li>
+        </ul>
+    </div>
+     <div class=" col-lg-2 py-1 text-center text-unique d-none d-lg-block">
+        <ul class="d-flex flex-column justify-content-center m-0 p-0">
+            <li>Stock</li>
+            <li class="opacity-75" style="font-size:0.7rem !important;">After</li>
+        </ul>
+    </div>
+    <div class="col-lg-2 col-3 py-1 ps-0 text-center text-unique" style="font-size:0.8rem !important;">
+        <ul class=" m-0 p-0 text-center">
+            <li class="text-center">Date</li>
+            <li class="opacity-75 text-center" style="font-size:0.7rem !important;">Day & Time</li>
+        </ul>
+    </div>
+</div>
+@{
+    if(!TheseProductGrns.Any()){
+        <div class="container text-center">
+            <p class="p-3 fs-4 text-unique fw-lighter">..No Purchase info.</p>
+        </div>
+    }
+    else{
+        int index = 0;
+        foreach(var item in TheseProductGrns){
+            index+=1;
+            <div class="row bg-xs border-bottom py-0 text-unique">
+                <div class="col-1 py-2 text-center">@(ProductToCheck.ProductGrn.IndexOf(item) + 1)</div>
+                <div class="col-lg-2 col-3 py-2 text-start text-unique">
+                    <a href="Purchases/Detail/@item.Grn.GrnId" class="p-0 m-0 text-unique"  style="font-size:0.8rem !important;">
+                        <ul class="d-flex flex-column justify-content-start m-0 p-0">
+                            <li class="fw-bolder text-primary opacity-75 txtshadow">@(item.Grn.GrnCode + item.Grn.GrnId)</li>
+                            <li class=" opacity-75 fw-bolder" style="font-size:0.7rem !important; width:fit-content;">@(item.Grn.GrnReceiptCode.Length > 10 ? item.Grn.GrnReceiptCode.Substring(0,8) + " .." : item.Grn.GrnReceiptCode)</li>
+                        </ul>
+                    </a>
+                </div>
+                <div class="col-lg-2 col-3 py-2 pe-0 text-start text-unique">
+                    <NavLink class="p-0 m-0 text-unique" href="" style="font-size:0.8rem !important;">
+                        <ul class="d-flex flex-column justify-content-start m-0 p-0">
+                            <li class="text-unique">&#64; @item.ProductItemCost.Value.ToString("n0")</li>
+                            <li class=" opacity-75 d-none d-sm-block" style="font-size:0.7rem !important; width:fit-content;">&sum; @((item.ProductItemCost * item.ProductItemQty).Value.ToString("n0"))</li>
+                        </ul>
+                    </NavLink>
+                </div>
+                <div class=" col-lg-2 py-2 text-center text-unique d-none d-lg-block">
+                    @item.StockAtPurchaseTime
+                </div>
+                <div class="col-lg-1 col-2 py-2 text-center txtshadow">
+                    @item.ProductItemQty
+                </div>
+                <div class=" col-lg-2 py-2 text-center text-unique d-none d-lg-block">
+                    @(item.ProductItemQty + item.StockAtPurchaseTime)
+                </div>
+                <div class="col-lg-2 col-3 py-2 ps-0  text-center text-unique" style="font-size:0.75rem !important; ">
+                    <ul class=" m-0 p-0">
+                        <li class="p-0 m-0">@(item.Grn.GrnDateCreated.ToString("dd MMM yy"))</li>
+                        <li class=" opacity-75 d-none d-sm-block p-0 m-0" style="font-size:0.7rem !important;">@(item.Grn.GrnDateCreated.ToString("ddd hh : mm"))</li>
+                    </ul>
+                </div>
+            </div>
+        }
+        <DetailPagination 
+            InnerCurrentPage=@InnerCurrentPage InnerTotalPages=@InnerTotalPages
+            InnerNextPage=@InnerNextPage InnerPreviousPage=@InnerPreviousPage
+        />
+    }
+}
+
+@code{
+    //  Inner Pagination 
+    private int InnerTotalPages = 1;
+    private int InnerCurrentPage = 1;
+    private int InnerPageSize = 7 ;
+    
+    [Parameter]
+    public Product ProductToCheck {get;set;}
+    private List<ProductGrn> TheseProductGrns = new();
+    
+    protected override async Task OnInitializedAsync(){
+        await base.OnInitializedAsync();  
+        InnerNextPage();
+        StateHasChanged();
+    }
+    
+    private async Task InnerNextPage(){
+        if(ProductToCheck.ProductGrn.Any()){
+            InnerTotalPages = ((int)(Math.Ceiling((double)(ProductToCheck.ProductGrn.Count)/InnerPageSize)));
+            
+            if(InnerCurrentPage < InnerTotalPages ){
+                InnerCurrentPage ++ ;
+            }
+            else{
+                InnerCurrentPage = InnerTotalPages; 
+            }
+            
+            TheseProductGrns = ProductToCheck.ProductGrn
+            .Skip((InnerCurrentPage - 1) * InnerPageSize)
+            .Take(InnerPageSize)
+            .ToList();
+        }
+        StateHasChanged();
+    }
+    
+    private async Task InnerPreviousPage(){
+        if(ProductToCheck.ProductGrn.Any()){
+            InnerTotalPages = ((int)(Math.Ceiling((double)(ProductToCheck.ProductGrn.Count)/InnerPageSize)));
+            
+            if(InnerCurrentPage > 1 ){
+                InnerCurrentPage -- ;
+            }
+            else{
+                InnerCurrentPage = 1; 
+            }
+            
+            TheseProductGrns = ProductToCheck.ProductGrn
+            .Skip((InnerCurrentPage - 1) * InnerPageSize)
+            .Take(InnerPageSize)
+            .ToList();
+        }
+        StateHasChanged();
+    }
+}

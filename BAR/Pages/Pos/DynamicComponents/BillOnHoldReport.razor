@@ -1,0 +1,400 @@
+@page "/Pos/OnHold"
+@layout PosHome
+
+@using Microsoft.EntityFrameworkCore
+@inject IDbContextFactory<BarContext> MyFactory
+@inject NavigationManager Navigation
+
+<PageTitle>Bill On Hold</PageTitle>
+
+<div class="row">
+    <div class="col-12">
+        <div class="row">
+            <div class="col-lg-8 col-12">
+                <div class="row">
+                    <div class="col-md-1 col-2 px-0 py-2 pe-md-3 text-end">
+                        <ul class="d-flex flex-column justify-content-end p-0 m-0" style="font-size:0.8rem !important;">
+                            <li class="p-0 m-0 me-2 py-2" >
+                                From : 
+                            </li>
+                            <li class="p-0 m-0 me-2 py-2">
+                                To : 
+                            </li>
+                        </ul>
+                    </div>
+                    <div class="col-md-2 col-5  py-2 text-start">
+                        <ul class="d-flex flex-column justify-content-start p-0 m-0" style="font-size:0.8rem !important;">
+                            <li class="p-0 m-0 mb-1">
+                                <input type="date" @bind=@FromDate @bind:event="onchange"  @onfocusout=@(()=> GetHoldsDateWiseByUser()) @onclick=@(()=> GetHoldsDateWiseByUser()) class="form-control fs-6 fw-bolder text-unique bg-blue border-0 py-2 rounded-0" style="font-size:0.8rem !important;" />
+                            </li>
+                            <li class="p-0 m-0">
+                                <input type="date" @bind=@ToDate @bind:event="onchange" @onfocusout=@(()=> GetHoldsDateWiseByUser()) @onclick=@(()=> GetHoldsDateWiseByUser()) class="form-control fs-6 fw-bolder text-unique bg-blue border-0 py-2 rounded-0" style="font-size:0.8rem !important;" />
+                            </li>
+                        </ul>
+                    </div>
+                    <div class="col-md-3 col-5  py-sm-2 py-3 px-md-0 text-start">
+                        <div class="container bg-blue text-unique fw-bolder px-1 py-2 text-center ">
+                            <ul class="d-flex flex-column p-0 m-0">
+                                <li class="fw-bolder">Worth Sales [Tzs]</li>
+                                <li class="fw-bolder opacity-75">@DateSales.ToString("n0")</li>
+                            </ul>
+                        </div>
+                    </div>
+                    <div class="col-md-3 col-6  py-sm-0 py-2 pe-0 text-start">
+                        <div class="form-floating mt-2 py-0 m-0">
+                            <select @bind=@Uid @bind:event="onchange" @onclick=@(()=> GetHoldsDateWiseByUser())   required  class="form-select m-0 text-capitalize border-0 bg-blue text-unique fw-bolder rounded-0" id="floatingSelect" aria-label="Floating label select example">
+                                <option value=0 >All</option>
+                                @{
+                                    foreach(var individual in Staffs){
+                                        <option value=@individual.UserId>
+                                            <div class="row">
+                                                <div class="col-3">
+                                                    @(individual.UserCode + individual.UserId)
+                                                </div>
+                                                <div class="col-9">
+                                                    @individual.UserFirstName
+                                                </div>
+                                            </div>
+                                        </option>
+                                    }
+                                }
+                                
+                            </select>
+                            <label for="floatingSelect">Cashier</label>
+                        </div>
+                    </div>
+                    <div class="col-md-3 col-6 py-sm-0 py-2 text-start">
+                        <div class="form-floating mt-2 py-0 m-0">
+                            <select @bind=@Uid @bind:event="onchange" @onclick=@(()=> GetHoldsDateWiseByUser())   required  class="form-select m-0 text-capitalize border-0 bg-blue text-unique fw-bolder rounded-0" id="floatingSelect" aria-label="Floating label select example">
+                                <option value=0 >All</option>
+                                @{
+                                    foreach(var individual in Staffs){
+                                        <option value=@individual.UserId>
+                                            <div class="row">
+                                                <div class="col-3">
+                                                    @(individual.UserCode + individual.UserId)
+                                                </div>
+                                                <div class="col-9">
+                                                    @individual.UserFirstName
+                                                </div>
+                                            </div>
+                                        </option>
+                                    }
+                                }
+                                
+                            </select>
+                            <label for="floatingSelect">Customer</label>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-lg-4 col-12 text-end py-2">
+                <input type="text" @bind=@Bid @onpaste=@(()=> GetThisHold(Bid))  @onfocusout=@(()=> GetThisHold(Bid)) class="py-3 text-center bg-xs text-unique opacity-75 border-0 rounded-0 fw-bolder rounded form-control" placeholder="SEARCH BY Hold #" />
+            </div>
+        </div>
+        <div class="row px-0">
+            <div class="col-lg-7 col-12 px-lg-4 px-2">
+                <div class="row px-0 bg-unique text-white py-3">
+                    <div class="col-1">
+                        #
+                    </div>
+                    <div class="col-sm-3 col-4 text-start">
+                        BillOnHold
+                    </div>
+                    <div class="col-2 text-start px-0">
+                        Items Costs
+                    </div>
+                    <div class="col-sm-2 d-none d-sm-block text-start px-0">
+                        Cashier
+                    </div>
+                     <div class="col-sm-2 col-3 text-start">
+                        BillName
+                    </div>
+                    <div class="col-2 text-start px-0">
+                        Action
+                    </div>
+                </div>
+                <div class="row bg-xs" style="overflow-y : scroll; max-height:66.3vh; overflow-x:hidden;">
+                    @{
+                        if(TheseHolds.Any()){
+                            if(TheseHolds.Count == 1 ){
+                                GetHoldItems(TheseHolds[0]);
+                            }
+
+                            foreach(var HoldItem in TheseHolds){
+                                double TotalSaleB = 0.0;
+                                
+                                foreach(var TaskB in HoldItem.ProductHold){
+                                    TotalSaleB += TaskB.HoldItemPrice * TaskB.QtyPurchased;
+                                }
+                                
+                                <li @onclick=@(()=> GetHoldItems(HoldItem)) class="col-12 border-bottom fw-bolder text-unique text-start py-2 bg-xs" style="cursor:pointer;" id="smart-bg" >
+                                    <div class="row px-0 text-unique">
+                                        <div class="col-1 fw-bolder py-2">@(TheseHolds.IndexOf(HoldItem) + 1)</div>
+                                        <div class="col-sm-3 col-4">
+                                            <ul class="p-0 m-0">
+                                                <li class="p-0 m-0 fw-bolder text-success ">@(HoldItem.HoldCode + HoldItem.HoldId)</li>
+                                                <li class="p-0 m-0 opacity-75 d-xl-block d-none">@HoldItem.HoldDateCreated.ToString("ddd, dd MMM yy , hh:mm")</li>
+                                                <li class="p-0 m-0 opacity-75 d-xl-none d-block">@HoldItem.HoldDateCreated.ToString("ddd, dd MMM yy")</li>
+                                            </ul>
+                                        </div>
+                                        <div class="col-2 px-0">
+                                            <ul class="p-0 m-0">
+                                                <li class="p-0 m-0 fw-bolder">Items : @HoldItem.ProductHold.Count</li>
+                                                <li class="p-0 m-0 opacity-75">
+                                                    @TotalSaleB.ToString("n0")
+                                                </li>
+                                            </ul>
+                                        </div>
+                                        <div class="col-sm-2 d-none d-sm-block px-0">
+                                            <ul class="p-0 m-0">
+                                                <li class="p-0 m-0 text-capitalize fw-bolder">@HoldItem.User.UserFirstName</li>
+                                                <li class="p-0 m-0 opacity-75 d-none d-xl-block">@(HoldItem.User.UserCode + HoldItem.User.UserId),  @HoldItem.User.UserAccessLevel</li>
+                                                <li class="p-0 m-0 opacity-75 d-block d-xl-none">@(HoldItem.User.UserCode + HoldItem.User.UserId)</li>
+                                            </ul>
+                                        </div>
+                                        <div class="col-sm-2 col-3 ">
+                                            <ul class="p-0 m-0 text-capitalize">
+                                                <li class="p-0 ps-1 m-0">Urio Bill</li>
+                                            </ul>
+                                        </div>
+                                        <div class="col-2 ps-0">
+                                            <ul class="p-0 m-0 d-flex flex-row justify-content-between ">
+                                                <a class="text-capitalize fw-bolder bg-success p-2 text-white" href="Pos/@HoldItem.HoldId">UnHold</a>
+                                                <li class="p-0 m-0 opacity-75 pt-1">
+                                                    <button @onclick=@(()=> DeleteThisHoldBill(HoldItem)) class="btn btn-close p-2 px-3"></button>
+                                                </li>
+                                            </ul>
+                                        </div>
+                                    </div>
+                                </li>
+                            }
+                            
+                        }else{
+                            <li class="p-3 bg-xs rounded text-center text-capitalize text-unique fw-bolder opacity-50">
+                                No Records
+                            </li>
+                        }
+                        
+                    }
+                </div>
+            </div>
+            <div class="col-lg-5 col-12 border-top border-2">
+                    @{
+                    
+                    if(SelectedHold.HoldId > 0){
+                        double TotalSaleA = 0.0;
+                        <div class="row py-1 bg-xs">
+                            <div class="col-5">
+                                <ul class="p-0 m-0">
+                                    <li class="p-0 m-0 fw-bolder text-success opacity-75">@SelectedHold.HoldId | @SelectedHold.HoldCode</li>
+                                    <li class="p-0 m-0 opacity-75">@SelectedHold.HoldDateCreated.ToString("ddd, dd MMM yy , hh:mm")</li>
+                                </ul>
+                            </div>
+                            <div class="col-3 px-0">
+                                <ul class="p-0 m-0">
+                                    <li class="p-0 m-0 fw-bolder">Items : @(SelectedHold.ProductHold.Any() ? SelectedHold.ProductHold.Count : 0)</li>
+                                    <li class="p-0 m-0 opacity-75">
+                                    @{
+                                        foreach(var TaskA in SelectedHold.ProductHold){
+                                            TotalSaleA += TaskA.HoldItemPrice * TaskA.QtyPurchased;
+                                        }
+                                    }
+                                        @TotalSaleA.ToString("n0")
+                                    </li>
+                                </ul>
+                            </div>
+                            <div class="col-4 px-0">
+                                <ul class="p-0 m-0">
+                                    <li class="p-0 m-0 text-capitalize fw-bolder">By : @(SelectedHold.User.UserFirstName)</li>
+                                    <li class="p-0 m-0 opacity-75">@SelectedHold.User.UserId | @SelectedHold.User.UserCode,  @SelectedHold.User.UserAccessLevel</li>
+                                </ul>
+                            </div>
+                        </div>
+                    }else{
+                        
+                        SelectedHold = new();
+                        <li class="p-3 bg-xs rounded text-center text-capitalize text-unique fw-bolder opacity-50">
+                            No Records Selected
+                        </li>
+                    
+                    }
+                }
+                <div class="row bg-blue" style="overflow-y : scroll; max-height:66.3vh; overflow-x:hidden;">
+                    @{
+                        foreach(var ItemList in TheseProductHolds){
+                            <li class="col-12 border-bottom fw-bolder text-unique text-start py-2" id="" >
+                                <div class="row px-0">
+                                    <div class="col-1 py-2">@(TheseProductHolds.IndexOf(ItemList) + 1)</div>
+                                    <div class="col-4 text-capitalize">
+                                        <ul class="p-0 m-0">
+                                            <li class="p-0 m-0">@(ItemList.Product.ProductCaption.Length > 20 ? ItemList.Product.ProductCaption.Substring(0,18) + ".." : ItemList.Product.ProductCaption)</li>
+                                            <li class="p-0 m-0 opacity-50">@ItemList.ProductId | @ItemList.Product.ProductCode</li>
+                                        </ul>
+                                    </div>
+                                    <div class="col-3 text-start">
+                                        <ul class="p-0 m-0 text-start">
+                                            <li class="p-0 m-0 text-start">Qty</li>
+                                            <li class="p-0 ps-1 m-0 opacity-50 text-start">@ItemList.QtyPurchased</li>
+                                        </ul>
+                                    </div>
+                                    <div class="col-4 text-capitalize px-0">
+                                        <ul class="p-0 m-0">
+                                            <li class="p-0 m-0">&#64; @ItemList.HoldItemPrice.ToString("n0")</li>
+                                            <li class="p-0 m-0 opacity-75">&sum; @((ItemList.HoldItemPrice * ItemList.QtyPurchased).ToString("n0"))</li>
+                                        </ul>
+                                    </div>
+                                </div>
+                            </li>
+                        }
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+@code{
+    
+    private DateTime FromDate = DateTime.Now;
+    private DateTime ToDate = DateTime.Now;
+    private string TempoBackground = "";
+    
+    private List<Hold> TheseHolds = new();
+    private Hold SelectedHold = new();
+    private List<ProductHold> TheseProductHolds = new();
+    private List<User> Staffs = new();
+    private int Uid = 0;
+    private int? Bid = null;
+    private double DateSales = 0.0;
+    
+    protected override async Task OnInitializedAsync(){
+        await base.OnInitializedAsync();
+        FromDate = DateTime.Today;
+        ToDate = DateTime.Now;
+        Bid = null;
+        Uid=0;
+        
+        await GetHoldsDateWiseByUser();
+        using(var repo = new UnitOfWork(MyFactory.CreateDbContext())){
+            Staffs = await repo.Users.GetAllUsersDetailedAsync(1, repo.Users.GetNoRecords());
+            
+            await repo.CompleteAsync();
+            repo.Dispose();
+        }
+        
+    }
+    
+    private async Task GetThisHold(int? HoldNumber){
+        
+        if(HoldNumber != null){
+            
+            TheseHolds = new();
+            TheseProductHolds = new();
+            SelectedHold = new();
+            
+            using(var repo = new UnitOfWork(MyFactory.CreateDbContext())){
+                Hold AHold = await repo.Holds.GetDetailedHoldAsync((int)HoldNumber);
+                if(AHold != null){
+                    TheseHolds.Add(AHold);
+                    
+                    FromDate = AHold.HoldDateCreated;
+                    ToDate = AHold.HoldDateCreated;
+                    Uid = (int)AHold.UserId;
+                    SelectedHold = AHold;
+                }else{
+                    TheseHolds = new();
+                    Uid = 0;
+                    Bid = null;
+                    FromDate = DateTime.Now;
+                    ToDate = DateTime.Now;
+                }
+                
+                SetDateSales();
+                
+                await repo.CompleteAsync();
+                repo.Dispose();
+            }
+        }
+    }
+    
+    private async Task GetHoldsDateWise(){
+        TheseHolds = new();
+        TheseProductHolds = new();
+        SelectedHold = new();
+        Bid = null;
+        Uid = 0;
+        
+        using(var repo = new UnitOfWork(MyFactory.CreateDbContext())){
+            TheseHolds = await repo.Holds.GetAllHoldsDateWiseDetailedAsync(FromDate, ToDate);
+            
+            await repo.CompleteAsync();
+            repo.Dispose();
+        }
+       SetDateSales();
+    }
+    
+    private async Task GetHoldsDateWiseByUser(){
+        TheseHolds = new();
+        TheseProductHolds = new();
+        SelectedHold = new();
+        Bid = null;
+        
+        using(var repo = new UnitOfWork(MyFactory.CreateDbContext())){
+            if(Uid > 0){
+                TheseHolds = await repo.Holds.GetAllHoldsDateWiseWithUserDetailedAsync(FromDate, ToDate,Uid);
+            }
+            else{
+                await GetHoldsDateWise();
+            }
+            
+            await repo.CompleteAsync();
+            repo.Dispose();
+        }
+        SetDateSales();
+    }
+    
+    private async Task GetHoldItems(Hold TempData){
+        TheseProductHolds = new();
+        SelectedHold = new();
+        
+        if(TempData != null){
+            
+            TheseProductHolds = TempData.ProductHold;
+            SelectedHold = await Task.Run(()=> (Hold)TempData);
+        }
+        Bid = null;
+        SetDateSales();
+        StateHasChanged();
+    }
+    
+    private void SetDateSales(){
+        double InnerTotal = 0.0;
+        DateSales = 0.0;
+        if(TheseHolds.Any()){
+            foreach(var item in TheseHolds){
+                foreach(var Hold in item.ProductHold){
+                    InnerTotal += ((Hold.QtyPurchased)*(Hold.HoldItemPrice));
+                }
+                DateSales += InnerTotal;
+                InnerTotal = 0.0;
+            }
+        }else{
+            DateSales = 0.0;
+        }
+    }
+    
+    private async Task DeleteThisHoldBill(Hold TempDelete){
+        using(var repo = new UnitOfWork(MyFactory.CreateDbContext())){
+            
+            repo.Holds.Remove(TempDelete);
+                
+            await repo.CompleteAsync();
+            repo.Dispose();
+        }
+
+        await GetHoldsDateWiseByUser();
+    }
+    
+}

@@ -1,0 +1,104 @@
+@page "/Categories/Create"
+@page "/Categories/Edit/{Sn:int}"
+
+@using Microsoft.EntityFrameworkCore
+@inject IDbContextFactory<BarContext> MyFactory
+@inject NavigationManager Navigation
+
+<PageTitle>Category | @SubTitle</PageTitle>
+
+<EditForm Model="ThisCategory" OnValidSubmit="ProcessAndSave" autocomplete="off">
+    <Options 
+        Title=@Title Icon=@Icon Url=@Url
+        UrlCaption=@UrlCaption SubTitle=@SubTitle
+        UrlCaptionIcon=@UrlCaptionIcon ShowSaveButton=@ShowSaveButton Funga=@Funga
+    />
+    <div class="row text-unique bg-white" style="height:75vh !important;">
+        <div class="col-12 col-md-3 text-start"></div>
+        <div class="col-12 col-md-6 text-start">
+            <div class="container py-md-5">
+                <div class="form-floating mt-2 rounded-3">
+                    <DataAnnotationsValidator/>
+                    <input required type="text" @bind="ThisCategory.CategoryCaption" class="form-control text-capitalize bg-xs border-0 text-unique fw-bolder rounded-0 " id="floatingInput" placeholder="Category Name (Caption / Short Description)">
+                    <label for="floatingInput">
+                        Category Name
+                    </label>
+                    <ValidationMessage For="() => ThisCategory.CategoryCaption"/>
+                </div>
+                <div class="form-floating mt-2">
+                    <textarea required @bind="ThisCategory.CategoryDescription" class="form-control text-capitalize border-0 bg-xs fw-bolder text-unique rounded-0" placeholder="Leave a comment here" id="floatingTextarea2" style="height: 100px"></textarea>
+                    <label for="floatingTextarea2">Description, about a Category.</label>
+                    <ValidationMessage For="() => ThisCategory.CategoryDescription"/>
+                </div>
+            </div>
+        </div>
+        <div class="col-12 col-md-3 text-start"></div>
+    </div>
+</EditForm>
+
+@code{
+    //Parameter
+    [Parameter]
+    public int Sn{get;set;}
+    
+    // Dynamic Options
+    public string Title = "Categories";
+    public string SubTitle = "Create New";
+    public string Icon = "stack";
+    public string Url = "Categories/Detail/0";
+    public string UrlCaption = "Detail View";
+    public string UrlCaptionIcon = "ui-checks-grid";
+    public bool ShowSaveButton = true;
+    public string Funga = "d-none";
+    
+    // Data
+    private Category ThisCategory = new();
+    private int LinkedIn = 0;
+    
+    protected override async Task OnInitializedAsync(){
+        await base.OnInitializedAsync();
+        await Start(Sn);
+    }
+    
+    private async Task Start(int TheKey){
+        
+        if(TheKey <= 0){
+            ThisCategory = new();
+        }
+        else{
+            using(var repo = new UnitOfWork(MyFactory.CreateDbContext())){
+                ThisCategory = await repo.Categories.GetDetailedCategoryAsync(TheKey);
+                
+                await repo.CompleteAsync();
+                repo.Dispose();
+            }
+            SubTitle = "Edit Category" ;
+        }
+    }
+    
+    private async Task ProcessAndSave(){
+       if(ThisCategory != null){
+            using(var repo = new UnitOfWork(MyFactory.CreateDbContext())){
+                if(ThisCategory.CategoryId > 0){
+                    repo.Categories.Update(ThisCategory);
+                    await repo.CompleteAsync();
+                    LinkedIn = ThisCategory.CategoryId;
+                    Navigation.NavigateTo("Categories/Detail/" + LinkedIn);
+                    repo.Dispose();
+                }
+                else{
+                 
+                    ThisCategory.CategoryCode = "CID";
+                    ThisCategory.CategoryDateCreated = DateTime.Now;
+                    await repo.Categories.AddAsync(ThisCategory);
+                    await repo.CompleteAsync();
+                    repo.Dispose();
+                }
+            } 
+            
+            ThisCategory = new();
+            StateHasChanged();
+       }  
+    }
+    
+}

@@ -1,0 +1,95 @@
+﻿<!-- NAVIGATION COMPONENT --> 
+
+<div class="bg-white p-0 w-100" id="NavigationHolder">
+    <div class="row p-0">
+        <div class="col-md-1 col-12 pe-0">
+            <ul class="nav nav-pills flex-row p-0 m-0 align-items-center align-items-sm-start" style=" margin:0.5rem auto !important;">
+                <li class="nav-item py-0 my-0">
+                    <a  class="nav-link align-middle px-3 rounded-0">
+                        <i class=" fs-6  bi-person-circle"></i> <span class=" d-none d-xl-inline text-unique">Razack</span> <span class=" d-sm-none d-inline">Razack Baraza</span>
+                    </a>
+                </li>
+            </ul>
+        </div>
+        <div class="col-md-10 col-12">
+            <div class="d-flex flex-row align-items-center align-items-sm-start" >
+                <ul class="nav nav-pills flex-row p-0 m-0 align-items-center align-items-sm-start" style=" margin:0.5rem auto !important;">
+                    <li class="nav-item py-0 my-0">
+                        <NavLink href="Home" class="nav-link align-middle px-3 rounded-0">
+                            <i class=" fs-6  bi-house-fill"></i> <span class=" d-none d-xl-inline">Home</span>
+                        </NavLink>
+                    </li>
+                    <li class="nav-item py-0 my-0">
+                        <NavLink href="Products" class="nav-link align-middle px-3 rounded-0">
+                            <i class=" bi-stack" style="font-size:0.89rem"></i> <span class=" d-none d-xl-inline">Product</span>
+                        </NavLink>
+                    </li>
+                    <li class="nav-item py-0 my-0">
+                        <NavLink href="Purchases" class="nav-link align-middle px-3 rounded-0">
+                            <i class=" fs-6 bi-cart4"></i> <span class=" d-none d-xl-inline">Purchase</span>
+                        </NavLink>
+                    </li>
+                    <li class="nav-item py-0 my-0">
+                        <NavLink data-bs-toggle="collapse" href="#collapseAdjust" role="button" aria-expanded="false" aria-controls="collapseAdjust" class="nav-link align-middle px-3 rounded-0">
+                            <i class=" bi-toggles2"style="font-size:0.85rem"></i> <span class=" d-none d-xl-inline">Adjustment</span> <i class="bi bi-caret-down-fill "style="font-size:0.8rem"></i>
+                        </NavLink>
+                        <div class="collapse p-0 m-0 text-start" id="collapseAdjust">
+                            <li class="ms-4"><a href="Adjustments"><i class="bi bi-activity iconsColor3 me-2 fs-6 "></i> <span class=" d-none d-xl-inline">Stock</span> </a></li>
+                            <li class="ms-4"><a href="Prices"><i class="bi bi-tag iconsColor3 me-2 fs-6 "></i><span class=" d-none d-xl-inline">Price</span> </a></li>
+                            <li class=" mb-2 ms-4"><a href="Opens"><i class="bi bi-layers iconsColor3 me-2 fs-6 "></i> <span class=" d-none d-xl-inline">OpenStock</span> </a></li>
+                        </div> 
+                    </li>
+                    <li class="nav-item py-0 my-0">
+                        <NavLink href="Suppliers" class="nav-link align-middle px-3 rounded-0">
+                            <i class=" fs-6 bi-truck-flatbed"></i> <span class=" d-none d-xl-inline">Supplier</span>
+                        </NavLink>
+                    </li>
+                    <li class="nav-item py-0 my-0">
+                        <NavLink href="Categories" class="nav-link align-middle px-3 rounded-0">
+                            <i class=" bi-columns-gap" style="font-size:0.8rem"></i> <span class=" d-none d-xl-inline">Category</span>
+                        </NavLink>
+                    </li>
+                    <li class="nav-item py-0 my-0">
+                        <NavLink href="Brands" class="nav-link align-middle px-3 rounded-0">
+                            &#64; <span class=" d-none d-xl-inline">Brand</span>
+                        </NavLink>
+                    </li>
+                    <li class="nav-item py-0 my-0">
+                        <NavLink href="Taxes" class="nav-link align-middle px-3 rounded-0">
+                            % <span class=" d-none d-xl-inline">Taxes</span>
+                        </NavLink>
+                    </li>
+                    <!-- 
+                    <li class="nav-item py-0 my-0">
+                        <NavLink data-bs-toggle="collapse" href="#collapseUser" role="button" aria-expanded="false" aria-controls="collapseUser" class="nav-link align-middle px-3 rounded-0">
+                            <i class=" fs-6 bi-people-fill"></i> <span class=" d-none d-xl-inline">Staff</span> <i class="bi bi-caret-down-fill "></i>
+                        </NavLink>
+                        <div class="collapse p-0 m-0 text-start" id="collapseUser">
+                        <li class="ms-4"><a href="Staff"><i class="bi bi-people iconsColor3 me-1 fs-6 "></i> <span class=" d-none d-xl-inline">All</span> </a></li>
+                            <li class="ms-4"><a href="Staff"><i class="bi bi-people iconsColor3 me-1 fs-6 "></i> <span class=" d-none d-xl-inline">Cashiers</span> </a></li>
+                            <li class="ms-4"><a href="Staff"><i class="bi bi-people-fill iconsColor3 me-2 fs-6 "></i><span class=" d-none d-xl-inline">Managers</span> </a></li>
+                        </div> 
+                    </li>
+                    ---->
+                    <li class="nav-item py-0 my-0">
+                        <NavLink href="Sales" class="nav-link align-middle px-3 rounded-0">
+                            <i class="bi-window-stack" style="font-size:0.89rem"></i> <span class=" d-none d-xl-inline">Sales</span>
+                        </NavLink>
+                    </li>
+                    <li class="nav-item py-0 my-0">
+                        <NavLink href="Pos/0" target="_blank" class="nav-link align-middle px-3 rounded-0">
+                            <i class="bi-display" style="font-size:0.89rem"></i> <span class=" d-none d-xl-inline">POS</span>
+                        </NavLink>
+                    </li>
+                </ul>
+            </div>
+        </div>
+        <div class="col-md-1 col-12 pt-2">
+            <ul class="nav nav-pills flex-row p-0 m-0 align-items-center align-items-sm-start" style=" margin:0.5rem auto !important;">
+                <li class="nav-item">
+                    <a href="" data-bs-toggle="modal" data-bs-target="#Search" class="px-2 py-1 rounded-0 txtshadow"><i class="bi bi-search txtshadow fs-6 "></i></a>
+                </li>
+            </ul>
+        </div>
+    </div> 
+</div>

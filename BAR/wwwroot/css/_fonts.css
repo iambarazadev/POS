@@ -1,0 +1,16 @@
+/*ONLY FONTS INCLUDES FOR A SITE*/
+  
+    @font-face{
+        font-family: "PoppinsRegular";
+        src: url(./_MyFonts/Poppins/Poppins-Light.ttf);
+    }
+    
+    @font-face{
+        font-family: "LatoRegular";
+        src: url(./_MyFonts/Lato/Lato-Light.ttf);
+    }
+    
+    @font-face{
+        font-family: "NunitoRegular";
+        src: url(./_MyFonts/Nunito/Nunito-VariableFont_wght.ttf);
+    }

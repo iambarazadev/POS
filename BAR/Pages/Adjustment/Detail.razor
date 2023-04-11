@@ -1,0 +1,242 @@
+@page "/Adjustments/Detail/{Sn:int}"
+
+@using Microsoft.EntityFrameworkCore
+@inject IDbContextFactory<BarContext> MyFactory
+@inject NavigationManager Navigation
+
+<PageTitle>Adjustments | @SubTitle</PageTitle>
+
+<Options 
+    Title=@Title Icon=@Icon 
+    Url=@Url UrlCaption=@UrlCaption 
+    CreateUrl=@CreateUrl SubTitle=@SubTitle 
+    UrlCaptionIcon=@UrlCaptionIcon OptionIcon=@OptionIcon
+    NextPage=@NextPage PreviousPage=@PreviousPage
+    FirstPage=@FirstPage LastPage=@LastPage
+    CurrentPage=@CurrentPage TotalPages=@TotalPages SingleStkAdj=true RealSid=@ThisStockAdjustment.StockAdjustmentId
+/>
+
+@{
+    if(ThisStockAdjustment.StockAdjustmentId < 1){
+        <div class="container text-center">
+            <p class="p-3  fs-4 text-unique fw-lighter">..No Adjustment To Display!</p>
+        </div>
+    }
+    else{
+        
+        FullDownCost = 0.0;
+        FullUpCost = 0.0;
+        TotalDownQty = 0;
+        TotalUpQty = 0;
+        FullAdjustmentCostDetail(ThisStockAdjustment);
+        <div class="row bg-white p-3" style="min-height:75vh !important;">
+            <div class="col-12">
+                <div class="row p-0">
+                    <div class="col-lg-3 col-md-6 col-12 text-start p-0">
+                        <ul class="d-flex flex-column justify-content-start p-0">
+                            <li>Adjustment info</li>
+                            <li class=" m-0 opacity-75 " style="font-size:0.8rem !important; width:fit-content;"> Code : @(ThisStockAdjustment.StockAdjustmentCode + ThisStockAdjustment.StockAdjustmentId)</li>
+                            <li class=" m-0 opacity-75 " style="font-size:0.8rem !important; width:fit-content;"> Date : @(ThisStockAdjustment.DateOfIssue.ToString("ddd, dd MMM yy, hh : mm"))</li>
+                        </ul>
+                    </div>
+                    <div class="col-lg-4 col-md-6 col-12 text-start p-0">
+                        <ul class="d-flex flex-column justify-content-start p-0 m-0">
+                            <ul class="d-flex flex-column justify-content-start p-0">
+                                <li>Items Cost info</li>
+                            </ul>
+                            <ul class="d-flex flex-row justify-content-start p-0 m-0">
+                                <li class=" m-0 opacity-75 pe-1 " style="font-size:0.8rem !important; width:fit-content;"> Up Pcs : </li>
+                                <li class=" m-0 opacity-75 pe-1 text-success " style="font-size:0.8rem !important; width:fit-content;"> @TotalUpQty</li>
+                                <li class=" m-0 opacity-75 pe-1 " style="font-size:0.8rem !important; width:fit-content;"> <i class=" bi-arrow-right"></i> Cost : </li>
+                                <li class=" m-0 opacity-75 pe-1 text-success " style="font-size:0.8rem !important; width:fit-content;"> @FullUpCost.ToString("n0")</li>
+                            </ul>
+                            <ul class="d-flex flex-row justify-content-start p-0 m-0">
+                                <li class=" m-0 opacity-75 pe-1 " style="font-size:0.8rem !important; width:fit-content;"> Down Pcs : </li>
+                                <li class=" m-0 opacity-75 pe-1 text-danger " style="font-size:0.8rem !important; width:fit-content;"> @TotalDownQty</li>
+                                <li class=" m-0 opacity-75 pe-1 " style="font-size:0.8rem !important; width:fit-content;"> <i class=" bi-arrow-right"></i> Cost : </li>
+                                <li class=" m-0 opacity-75 pe-1 text-danger " style="font-size:0.8rem !important; width:fit-content;"> @FullDownCost.ToString("n0")</li>
+                            </ul>
+                        </ul>
+                    </div>
+                    <div class="col-lg-5 col-12 text-start p-0">
+                        <ul class="d-flex flex-column justify-content-start p-0">
+                            <li>Reason</li>
+                            <li class=" m-0 opacity-75 " style="font-size:0.8rem !important; width:fit-content;"><i class=" bi-person-fill"></i> @ThisStockAdjustment.User.UserFirstName, @ThisStockAdjustment.User.UserAccessLevel</li>
+                            <li class=" m-0 opacity-75 " style="font-size:0.8rem !important; width:fit-content;">: @ThisStockAdjustment.StockAdjustmentsReasons</li>
+                        </ul>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-12">
+                        <div class="row text-white  shadow-sm txtshadow bg-unique">
+                            <div class="col-1 text-center py-3 fw-bolder">#</div>
+                            <div class="col-lg-2 col-5 py-3 text-start">Product</div>
+                            <div class="col-1 d-none d-lg-block py-3 text-center ">Before</div>
+                            <div class="col-lg-1 col-2 py-3 text-center ">Adjust</div>
+                            <div class="col-1 d-none d-lg-block py-3 text-center">After</div>
+                            <div class="col-2 py-3 d-none d-lg-block text-start">Cost Before</div>
+                            <div class="col-lg-2 col-4 py-3 text-md-start text-start ">CostAdjusted</div>
+                            <div class="col-2 py-3 d-none d-lg-block text-start ">Cost After</div>
+                        </div>
+                    </div>
+                </div>
+                @*Dynamic component adjust list*@
+                    @{
+                        if(this.ThisStockAdjustment.StockAdjustmentProduct != null && this.ThisStockAdjustment.StockAdjustmentProduct.Count > 0){
+                                <InAdjust StockAdjustmentToCheck=@ThisStockAdjustment/>
+                            }
+                        else{
+                            <p class="fs-6 text-center text-unique py-3 px-5  bg-xs my-3 border border-2" style="width:fit-content; margin:1px auto;">No StockAdjustmentProducts info</p>
+                            ThisStockAdjustment.StockAdjustmentProduct = new();
+                        }
+                    }
+                @*end of dynamics*@
+            </div>
+        </div>
+    }
+}
+
+@code{
+    [Parameter]
+    public int Sn{get;set;}
+    public string Title = "Stock";
+    public string SubTitle = "Detail view";
+    public string Icon = "activity";
+    public string Url = "Adjustments";
+    public string UrlCaption = "List View";
+    public string UrlCaptionIcon = "view-stacked";
+    public string OptionIcon = "ui-checks-grid";
+    public string CreateUrl = "Adjustments/Create";
+    
+    //  Pagination 
+    private int TotalPages = 1;
+    private int CurrentPage = 1;
+    private int PageSize = 1 ;
+    
+    // Data Variables
+    private StockAdjustment ThisStockAdjustment = new();
+    private double FullUpCost = 0.0;
+    private double FullDownCost = 0.0;
+    private int TotalUpQty = 0;
+    private int TotalDownQty = 0;
+    
+    protected override async Task OnInitializedAsync(){
+        await base.OnInitializedAsync();
+        ThisStockAdjustment.StockAdjustmentProduct = new();
+        
+        await Start(Sn);
+    }
+    
+    private async Task Start(int cid = 0){
+        ThisStockAdjustment.StockAdjustmentProduct = new();
+        using(var repo = new UnitOfWork(MyFactory.CreateDbContext())){
+            TotalPages = repo.StockAdjustments.GetNoRecords();
+            
+            if(cid < 1 && TotalPages > 0){
+                ThisStockAdjustment = (await repo.StockAdjustments.GetAllStockAdjustmentsDetailedAsync(1,1)).SingleOrDefault();
+                CurrentPage = (repo.StockAdjustments.GetIndexOf(ThisStockAdjustment) + 1 );
+            }
+            else if(cid > 0 && cid <= TotalPages){
+                ThisStockAdjustment = await repo.StockAdjustments.GetDetailedStockAdjustmentAsync(cid);
+                CurrentPage = (repo.StockAdjustments.GetIndexOf(ThisStockAdjustment) + 1 );
+            }
+            else{
+                ThisStockAdjustment = new();
+                ThisStockAdjustment.StockAdjustmentProduct = new();
+            }
+            
+            await repo.CompleteAsync();
+            repo.Dispose(); 
+        }
+        
+        StateHasChanged();
+    }
+    
+    private async Task NextPage(){
+        ThisStockAdjustment.StockAdjustmentProduct = new();
+        using(var repo = new UnitOfWork(MyFactory.CreateDbContext())){
+            TotalPages = repo.StockAdjustments.GetNoRecords();
+            
+            if(CurrentPage < TotalPages ){
+                CurrentPage ++ ;
+            }
+            else{
+                CurrentPage = TotalPages; 
+            }
+            
+            ThisStockAdjustment = (await repo.StockAdjustments.GetAllStockAdjustmentsDetailedAsync(CurrentPage, PageSize)).SingleOrDefault();
+            
+            await repo.CompleteAsync();
+            repo.Dispose(); 
+        }
+    }
+    
+    private async Task PreviousPage(){
+        ThisStockAdjustment.StockAdjustmentProduct = new();
+        using(var repo = new UnitOfWork(MyFactory.CreateDbContext())){
+            TotalPages = repo.StockAdjustments.GetNoRecords();
+            
+            if(CurrentPage > 1 ){
+                CurrentPage -- ;
+            }
+            else{
+                CurrentPage = 1; 
+            }
+            
+            ThisStockAdjustment = (await repo.StockAdjustments.GetAllStockAdjustmentsDetailedAsync(CurrentPage, PageSize)).SingleOrDefault();
+            
+            await repo.CompleteAsync();
+            repo.Dispose(); 
+        }
+    }
+    
+    private async Task FirstPage(){
+        ThisStockAdjustment.StockAdjustmentProduct = new();
+        using(var repo = new UnitOfWork(MyFactory.CreateDbContext())){
+            TotalPages = repo.StockAdjustments.GetNoRecords();
+            
+            CurrentPage = 1; 
+            
+            ThisStockAdjustment = (await repo.StockAdjustments.GetAllStockAdjustmentsDetailedAsync(CurrentPage, PageSize)).SingleOrDefault();
+            
+            await repo.CompleteAsync();
+            repo.Dispose(); 
+        }
+    }
+    
+    private async Task LastPage(){
+        ThisStockAdjustment.StockAdjustmentProduct = new();
+        using(var repo = new UnitOfWork(MyFactory.CreateDbContext())){
+            TotalPages = repo.StockAdjustments.GetNoRecords();
+            
+            CurrentPage = TotalPages; 
+            
+            ThisStockAdjustment = (await repo.StockAdjustments.GetAllStockAdjustmentsDetailedAsync(CurrentPage, PageSize)).SingleOrDefault();
+            
+            await repo.CompleteAsync();
+            repo.Dispose(); 
+        }
+    }
+    
+    private async Task FullAdjustmentCostDetail(StockAdjustment ThisData){
+        using(var repo = new UnitOfWork(MyFactory.CreateDbContext())){
+            if(ThisData != null){
+                TotalUpQty = ThisData.StockAdjustmentProduct.Where(x => x.QtyAdjusted > 0).Sum(x => x.QtyAdjusted);
+                TotalDownQty = ThisData.StockAdjustmentProduct.Where(x => x.QtyAdjusted < 0).Sum(x => x.QtyAdjusted);
+                
+                foreach(var yitem in ThisData.StockAdjustmentProduct){
+                    if(yitem.QtyAdjusted > 0){
+                        FullUpCost += (double)(yitem.Product.ProductGrn.Average(y => y.ProductItemCost)) * (yitem.QtyAdjusted);
+                    }
+                    else if(yitem.QtyAdjusted < 0){
+                        FullDownCost += (double)(yitem.Product.ProductGrn.Average(y => y.ProductItemCost)) * (yitem.QtyAdjusted);
+                    }
+                    
+                }
+            }
+            
+            await repo.CompleteAsync();
+            repo.Dispose(); 
+        }
+    } 
+}

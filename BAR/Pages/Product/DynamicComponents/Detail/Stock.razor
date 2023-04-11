@@ -1,0 +1,157 @@
+@using Microsoft.EntityFrameworkCore
+@inject IDbContextFactory<BarContext> MyFactory
+@inject NavigationManager Navigation
+
+<div class="row py-0 text-unique" >
+    <div class="col-1 py-2 text-center">#</div>
+    <div class="col-3 py-1 text-start text-unique">
+        <NavLink class="p-0 m-0 text-unique" href="" >
+            <ul class="d-flex flex-column justify-content-start m-0 p-0" >
+                <li class="">AdjCode</li>
+                <li class=" p-0 opacity-75" style="font-size:0.7rem !important; width:fit-content;"> Responsible</li>
+            </ul>
+        </NavLink>
+    </div>
+    <div class="col-2 py-1 text-center text-unique" >
+       <ul class="d-flex flex-column justify-content-center m-0 p-0" >
+            <li class="">Stock</li>
+            <li class=" p-0 opacity-75" style="font-size:0.7rem !important;"> Before</li>
+        </ul>
+    </div>
+    <div class="col-lg-2 d-none d-lg-block py-1 text-center text-unique" >
+       <ul class="d-flex flex-column justify-content-center m-0 p-0" >
+            <li class="">Stock</li>
+            <li class=" p-0 opacity-75" style="font-size:0.7rem !important;"> Variance</li>
+        </ul>
+    </div>
+    <div class=" col-2 py-1 text-center text-unique" >
+        <ul class="d-flex flex-column justify-content-center m-0 p-0" >
+            <li class="">Stock</li>
+            <li class=" p-0 opacity-75" style="font-size:0.7rem !important;"> After</li>
+        </ul>
+    </div>
+    <div class="col-lg-2 col-4 py-1 text-center text-unique" >
+        <ul class="d-flex flex-column justify-content-center m-0 p-0" >
+            <li class="">Date</li>
+            <li class=" p-0 opacity-75" style="font-size:0.7rem !important;"> Day & Time</li>
+        </ul>
+    </div>
+</div>
+@{
+    if(!TheseStockAdjustmentProducts.Any()){
+        <div class="container text-center">
+            <p class="p-3  fs-4 text-unique fw-lighter">..No Stock Adjustments info.</p>
+        </div>
+    }
+    else{
+        foreach(var item in TheseStockAdjustmentProducts){
+            StockBefore = 0;
+            StockVariance = 0;
+            StockAfter = 0;
+            Colouring = "";
+            
+            StockBefore = item.StockAtAdjustmentTime;
+            StockVariance = item.QtyAdjusted ;
+            StockAfter = StockBefore + StockVariance ;
+            Colouring = item.QtyAdjusted > 0 ? "text-success" : "text-danger";
+            
+            <div class="row bg-xs border-bottom py-0 text-unique">
+                <div class="col-1 py-2 text-center">
+                    @(ProductToCheck.StockAdjustmentProduct.IndexOf(item)+1)
+                </div>
+                <div class="col-3 py-2 text-start text-unique" style="font-size:0.8rem !important;">
+                    <a class="p-0 m-0" href="Adjustments/Detail/@item.StockAdjustment.StockAdjustmentId">
+                        <ul class="d-flex flex-column justify-content-start m-0 p-0">
+                            <li class="text-primary p-0 m-0">@(item.StockAdjustment.StockAdjustmentCode + item.StockAdjustment.StockAdjustmentId)</li>
+                            <li class=" opacity-75 p-0 m-0" style="font-size:0.7rem !important; width:fit-content;"> @(item.StockAdjustment.User.UserFirstName.Length > 9 ? item.StockAdjustment.User.UserFirstName.Substring(0,7) + " .." : item.StockAdjustment.User.UserFirstName)</li>
+                        </ul>
+                    </a>
+                </div>
+                <div class="col-2 py-2 text-center text-unique" style="font-size:0.8rem !important;">
+                    @StockBefore
+                </div>
+                <div class="col-lg-2 d-none d-lg-block py-2 text-center @Colouring" style="font-size:0.8rem !important;">
+                    @(StockVariance > 0 ? "+" :"")@StockVariance
+                </div>
+                <div class="col-2 py-2 text-center text-unique" style="font-size:0.8rem !important;">
+                    @StockAfter
+                </div>
+                <div class="col-lg-2 col-4 py-2 text-center text-unique" style="font-size:0.8rem !important;">
+                    <ul class="d-flex flex-column justify-content-center m-0 p-0">
+                        <li class="p-0 m-0">@item.StockAdjustment.DateOfIssue.ToString("dd MMM yy")</li>
+                        <li class=" opacity-75 p-0 m-0" style="font-size:0.7rem !important;">@item.StockAdjustment.DateOfIssue.ToString("ddd hh : mm")</li>
+                    </ul>
+                </div>
+            </div>
+        }
+        <DetailPagination 
+            InnerCurrentPage=@InnerCurrentPage InnerTotalPages=@InnerTotalPages
+            InnerNextPage=@InnerNextPage InnerPreviousPage=@InnerPreviousPage
+        />
+    }
+}
+
+
+@code{
+    
+    //  Inner Pagination 
+    private int InnerTotalPages = 1;
+    private int InnerCurrentPage = 1;
+    private int InnerPageSize = 7 ;
+    
+    [Parameter]
+    public Product ProductToCheck {get;set;}
+    private List<StockAdjustmentProduct> TheseStockAdjustmentProducts = new();
+    
+    private int StockBefore = 0;
+    private int StockVariance = 0;
+    private int StockAfter = 0;
+    private int AdjustmentQtyBeforeDate = 0;
+    private string Colouring = "";
+    
+    protected override async Task OnInitializedAsync(){
+        await base.OnInitializedAsync();  
+        InnerNextPage();
+        StateHasChanged();
+    }
+    
+    private async Task InnerNextPage(){
+        TheseStockAdjustmentProducts = new();
+        if(ProductToCheck.StockAdjustmentProduct.Any()){
+            InnerTotalPages = ((int)(Math.Ceiling((double)(ProductToCheck.StockAdjustmentProduct.Count)/InnerPageSize)));
+            
+            if(InnerCurrentPage < InnerTotalPages ){
+                InnerCurrentPage ++ ;
+            }
+            else{
+                InnerCurrentPage = InnerTotalPages; 
+            }
+            
+            TheseStockAdjustmentProducts = ProductToCheck.StockAdjustmentProduct
+            .Skip((InnerCurrentPage - 1) * InnerPageSize)
+            .Take(InnerPageSize)
+            .ToList();
+        }
+        StateHasChanged();
+    }
+    
+    private async Task InnerPreviousPage(){
+        TheseStockAdjustmentProducts = new();
+        if(ProductToCheck.StockAdjustmentProduct.Any()){
+            InnerTotalPages = ((int)(Math.Ceiling((double)(ProductToCheck.StockAdjustmentProduct.Count)/InnerPageSize)));
+            
+            if(InnerCurrentPage > 1 ){
+                InnerCurrentPage -- ;
+            }
+            else{
+                InnerCurrentPage = 1; 
+            }
+            
+            TheseStockAdjustmentProducts = ProductToCheck.StockAdjustmentProduct
+            .Skip((InnerCurrentPage - 1) * InnerPageSize)
+            .Take(InnerPageSize)
+            .ToList();
+        }
+        StateHasChanged();
+    }
+}

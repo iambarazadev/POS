@@ -1,0 +1,220 @@
+@page "/Opens/Detail/{Sn:int}"
+
+@using Microsoft.EntityFrameworkCore
+@inject IDbContextFactory<BarContext> MyFactory
+@inject NavigationManager Navigation
+
+<PageTitle>Opens | @SubTitle </PageTitle>
+
+<Options 
+    Title=@Title Icon=@Icon 
+    Url=@Url UrlCaption=@UrlCaption 
+    CreateUrl=@CreateUrl SubTitle=@SubTitle 
+    UrlCaptionIcon=@UrlCaptionIcon OptionIcon=@OptionIcon
+    NextPage=@NextPage PreviousPage=@PreviousPage
+    FirstPage=@FirstPage LastPage=@LastPage
+    CurrentPage=@CurrentPage TotalPages=@TotalPages SingleOpen=true RealOid=@ThisOpen.OpenId
+/>
+
+
+@{
+    if(ThisOpen.OpenId < 1){
+        <div class="container text-center">
+            <p class="p-3  fs-4 text-unique fw-lighter">..No Open To Display!</p>
+        </div>
+    }
+    else{
+        FullCost = 0.0;
+        GetFullOpenCost(ThisOpen);
+        <div class="row bg-white p-3 pb-0">
+            <div class="col-12">
+                <div class="row p-0">
+                    <div class="col-lg-4 col-md-6 col-12 text-start p-0">
+                        <ul class="d-flex flex-column justify-content-start p-0">
+                            <li>Open info</li>
+                            <li class=" m-0 opacity-75 " style="font-size:0.8rem !important; width:fit-content;"> Date : @(ThisOpen.OpenDateCreated.ToString("ddd, dd MMM yyyy, hh : mm"))</li>
+                            <li class=" m-0 opacity-75 " style="font-size:0.8rem !important; width:fit-content;"> Code : <strong>@(ThisOpen.OpenCode + ThisOpen.OpenId) </strong></li>
+                        </ul>
+                    </div>
+                    <div class="col-lg-4 col-md-6 col-12 text-start p-0">
+                        <ul class="d-flex flex-column justify-content-start p-0">
+                            <li>Items Cost info</li>
+                            <li class=" m-0 opacity-75 " style="font-size:0.8rem !important; width:fit-content;"> Total Items : @(ThisOpen.ProductOpen.Count) /pcs @(ThisOpen.ProductOpen.Sum(x => x.ProductItemQty)) </li>
+                            <li class=" m-0 opacity-75 " style="font-size:0.8rem !important; width:fit-content;"> TotalCost : @FullCost.ToString("n0") </li>
+                        </ul>
+                    </div>
+                    <div class="col-lg-4 col-md-6 col-12 text-start p-0">
+                        <ul class="d-flex flex-column justify-content-start p-0">
+                            <li>Responsible</li>
+                            <li class=" m-0 opacity-75 text-capitalize" style="font-size:0.8rem !important; width:fit-content;">Name : @ThisOpen.User.UserFirstName @ThisOpen.User.UserLastName , @ThisOpen.User.UserAccessLevel </li>
+                            <li class=" m-0 opacity-75 " style="font-size:0.8rem !important; width:fit-content;">Code : @ThisOpen.User.UserCode | Phone : @ThisOpen.User.UserPhone</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="row bg-white px-3 py-0" style="min-height:63vh !important;">
+            <div class="col-12">
+                <div class="row text-white  shadow-sm txtshadow bg-unique">
+                    <div class="col-1 text-center py-3 fw-bolder">#</div>
+                    <div class="col-lg-4 col-4 py-3 text-start">ProductOpen</div>
+                    <div class="col-1 d-none d-lg-block py-3 text-center ">Before</div>
+                    <div class="col-lg-1 col-3 py-3 text-center ">Opened</div>
+                    <div class="col-1 d-none d-lg-block py-3 text-center">After</div>
+                    <div class="col-lg-2 col-4 py-3 text-start">Open.Cost</div>
+                    <div class="col-2 d-none d-lg-block py-3 text-md-start text-center ">Retail Price</div>
+                </div>
+                
+                @* Start Dynamic Products*@
+                    @{
+                        if(this.ThisOpen.ProductOpen != null && this.ThisOpen.ProductOpen.Count > 0){
+                                <InProductOpen OpenToCheck=@ThisOpen/>
+                            }
+                        else{
+                            <p class="fs-6 text-center text-unique py-3 px-5  bg-xs my-3 border border-2" style="width:fit-content; margin:1px auto;">No ProductOpens info</p>
+                            ThisOpen.ProductOpen = new();
+                        }
+                    }
+                @* End Dynamic ProductOpens*@
+
+            </div>
+        </div>
+    }
+}
+
+
+
+@code{
+    
+    // Component Variables
+    [Parameter]
+    public int Sn{get;set;}
+    public string Title = "Opens";
+    public string SubTitle = "Detail view";
+    public string Icon = "stack";
+    public string Url = "Opens";
+    public string UrlCaption = "List View";
+    public string UrlCaptionIcon = "view-stacked";
+    public string OptionIcon = "ui-checks-grid";
+    public string CreateUrl = "Opens/Create";
+    
+    
+    //  Pagination 
+    private int TotalPages = 1;
+    private int CurrentPage = 1;
+    private int PageSize = 1 ;
+    
+    
+    // Data Variables
+    private Open ThisOpen = new();
+    private double FullCost = 0.0;
+    
+    protected override async Task OnInitializedAsync(){
+        await base.OnInitializedAsync();
+        ThisOpen.ProductOpen = new();
+        await Start(Sn);
+    }
+    
+    private async Task Start(int cid = 0){
+        ThisOpen.ProductOpen = new();
+        using(var repo = new UnitOfWork(MyFactory.CreateDbContext())){
+            TotalPages = repo.Opens.GetNoRecords();
+            
+            if(cid < 1 && TotalPages > 0){
+                ThisOpen = (await repo.Opens.GetAllOpensDetailedAsync(1,1)).SingleOrDefault();
+                CurrentPage = (repo.Opens.GetIndexOf(ThisOpen) + 1 );
+                
+            }
+            else if(cid > 0 && cid <= TotalPages){
+                ThisOpen = await repo.Opens.GetDetailedOpenAsync(cid);
+                CurrentPage = (repo.Opens.GetIndexOf(ThisOpen) + 1 );
+            }
+            else{
+                ThisOpen = new();
+                ThisOpen.ProductOpen = new();
+            }
+            
+            await repo.CompleteAsync();
+            repo.Dispose(); 
+        }
+        
+        StateHasChanged();
+    }
+    
+    private async Task NextPage(){
+        ThisOpen.ProductOpen = new();
+        using(var repo = new UnitOfWork(MyFactory.CreateDbContext())){
+            TotalPages = repo.Opens.GetNoRecords();
+            
+            if(CurrentPage < TotalPages ){
+                CurrentPage ++ ;
+            }
+            else{
+                CurrentPage = TotalPages; 
+            }
+            
+            ThisOpen = (await repo.Opens.GetAllOpensDetailedAsync(CurrentPage, PageSize)).SingleOrDefault();
+            
+            await repo.CompleteAsync();
+            repo.Dispose(); 
+        }
+    }
+    
+    private async Task PreviousPage(){
+        ThisOpen.ProductOpen = new();
+        using(var repo = new UnitOfWork(MyFactory.CreateDbContext())){
+            TotalPages = repo.Opens.GetNoRecords();
+            
+            if(CurrentPage > 1 ){
+                CurrentPage -- ;
+            }
+            else{
+                CurrentPage = 1; 
+            }
+            
+            ThisOpen = (await repo.Opens.GetAllOpensDetailedAsync(CurrentPage, PageSize)).SingleOrDefault();
+            
+            await repo.CompleteAsync();
+            repo.Dispose(); 
+        }
+    }
+    
+    private async Task FirstPage(){
+        ThisOpen.ProductOpen = new();
+        using(var repo = new UnitOfWork(MyFactory.CreateDbContext())){
+            TotalPages = repo.Opens.GetNoRecords();
+            
+            CurrentPage = 1; 
+            
+            ThisOpen = (await repo.Opens.GetAllOpensDetailedAsync(CurrentPage, PageSize)).SingleOrDefault();
+            
+            await repo.CompleteAsync();
+            repo.Dispose(); 
+        }
+    }
+    
+    private async Task LastPage(){
+        ThisOpen.ProductOpen = new();
+        using(var repo = new UnitOfWork(MyFactory.CreateDbContext())){
+            TotalPages = repo.Opens.GetNoRecords();
+            
+            CurrentPage = TotalPages; 
+            
+            ThisOpen = (await repo.Opens.GetAllOpensDetailedAsync(CurrentPage, PageSize)).SingleOrDefault();
+            
+            await repo.CompleteAsync();
+            repo.Dispose(); 
+        }
+    }
+    
+    private async Task GetFullOpenCost(Open ThisData){
+        
+        if(ThisData != null){
+            foreach(var xitem in ThisData.ProductOpen){
+                FullCost += (double)((xitem.ProductItemQty) * (xitem.ProductItemCost));
+            }
+        }
+
+    }
+    
+}

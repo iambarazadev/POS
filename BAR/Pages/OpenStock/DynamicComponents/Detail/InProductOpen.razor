@@ -1,0 +1,132 @@
+@using Microsoft.EntityFrameworkCore
+@inject IDbContextFactory<BarContext> MyFactory
+@inject NavigationManager Navigation
+
+<div class="col-12">
+    @{  
+      int index = 0;
+        foreach(var item in TheseProductOpens){
+            index +=1;
+            GetStockBefore(item.OpenId, item.ProductId);
+            RetailPrice = item.Product.ProductPrice.Any() ? item.Product.ProductPrice.LastOrDefault().LatestPrice : 0.0 ;
+            <div class="row text-unique rounded-0 bg-xs border-bottom">
+                <div class="col-1 text-center py-2 fw-bolder">@(index)</div>
+                <div class="col-lg-4 col-4 py-1 text-start">
+                    <a class="p-0 m-0" href="Products/Detail/@item.Product.ProductId">
+                        <ul class="d-flex flex-column justify-content-start p-0 m-0 text-capitalize">
+                            <li class="text-primary d-none d-lg-block">@(item.Product.ProductCaption.Length > 20 ? item.Product.ProductCaption.Substring(0,16) + " .." : item.Product.ProductCaption)</li>
+                            <li class="text-primary d-lg-none">@(item.Product.ProductCaption.Length > 11 ? item.Product.ProductCaption.Substring(0,8) + " .." : item.Product.ProductCaption)</li>
+                            <li class="rounded-3 m-0 opacity-75" style="font-size:0.7rem !important; width:fit-content;">@(item.Product.ProductCode + item.Product.ProductId)</li>
+                        </ul>
+                    </a>
+                </div>
+                <div class="col-1 d-none d-lg-block py-2 text-center ">
+                    @(OldStock)
+                </div>
+                <div class="col-lg-1 col-3 py-2 text-center text-success">@item.ProductItemQty</div>
+                <div class="col-1 d-none d-lg-block py-2 text-center">@(OldStock + item.ProductItemQty)</div>
+                <div class="col-lg-2 col-4 py-1 text-start px-0 ps-2 text-success">
+                    <ul class="d-flex flex-column justify-content-start p-0 m-0">
+                        <li>&#64; @(item.ProductItemCost.Value.ToString("n0"))</li>
+                        <li class="rounded-3 m-0 opacity-75 " style="font-size:0.7rem !important; width:fit-content;">&sum; @((item.ProductItemCost * item.ProductItemQty).Value.ToString("n0"))</li>
+                    </ul>
+                </div>
+                <div class="col-2 d-none d-lg-block py-1 text-md-start text-center ">
+                    <ul class="d-flex flex-column justify-content-start p-0 m-0 text-success">
+                        <li>&#64; @RetailPrice.ToString("n0")</li>
+                        <li class="rounded-3 m-0 opacity-75 " style="font-size:0.7rem !important; width:fit-content;">
+                            &sum; @((RetailPrice * (OldStock + item.ProductItemQty)).Value.ToString("n0"))
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        }
+    }
+</div>
+<DetailPagination 
+    InnerCurrentPage=@InnerCurrentPage InnerTotalPages=@InnerTotalPages
+    InnerNextPage=@InnerNextPage InnerPreviousPage=@InnerPreviousPage
+/>
+
+
+
+@code{
+    
+    //  Inner Pagination 
+    private int InnerTotalPages = 1;
+    private int InnerCurrentPage = 1;
+    private int InnerPageSize = 6 ;
+        
+    // Parameter
+    [Parameter]
+    public Open OpenToCheck {get;set;}
+    private List<ProductOpen> TheseProductOpens = new();
+    private int OldStock = 0;
+    private double RetailPrice = 0.0;
+    
+    protected override async Task OnInitializedAsync(){
+        await base.OnInitializedAsync();
+        await InnerNextPage();
+        StateHasChanged();
+    }
+    
+    
+    private async Task InnerNextPage(){
+        
+        if(OpenToCheck.ProductOpen.Any()){
+            InnerTotalPages = ((int)(Math.Ceiling((double)(OpenToCheck.ProductOpen.Count)/InnerPageSize)));
+            
+            if(InnerCurrentPage < InnerTotalPages ){
+                InnerCurrentPage ++ ;
+            }
+            else{
+                InnerCurrentPage = InnerTotalPages; 
+            }
+            
+            TheseProductOpens = OpenToCheck.ProductOpen
+            .Skip((InnerCurrentPage - 1) * InnerPageSize)
+            .Take(InnerPageSize)
+            .ToList();
+        }
+        else{
+            OpenToCheck.ProductOpen = new();
+        }
+        StateHasChanged();
+    }
+    
+    
+    private async Task InnerPreviousPage(){
+        if(OpenToCheck.ProductOpen.Any()){
+            InnerTotalPages = ((int)(Math.Ceiling((double)(OpenToCheck.ProductOpen.Count)/InnerPageSize)));
+            
+            if(InnerCurrentPage > 1 ){
+                InnerCurrentPage -- ;
+            }
+            else{
+                InnerCurrentPage = 1; 
+            }
+            
+            TheseProductOpens = OpenToCheck.ProductOpen
+            .Skip((InnerCurrentPage - 1) * InnerPageSize)
+            .Take(InnerPageSize)
+            .ToList();
+        }
+        else{
+            OpenToCheck.ProductOpen = new();
+        }
+        StateHasChanged();
+    }
+    
+    
+    private async Task GetStockBefore(int? Gid, int? Pid){
+        using(var repo = new UnitOfWork(MyFactory.CreateDbContext())){
+            
+            OldStock = repo.ProductOpens.GetStockBeforeDate(Gid, Pid);
+            
+            await repo.CompleteAsync();
+            repo.Dispose();
+        }
+    }
+    
+}
+

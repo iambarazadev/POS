@@ -1,0 +1,383 @@
+@page "/Products"
+
+@using Microsoft.EntityFrameworkCore
+@inject IDbContextFactory<BarContext> MyFactory
+@inject NavigationManager Navigation
+
+<PageTitle>Products | @SubTitle</PageTitle>
+
+<Options 
+    Title=@Title Icon=@Icon 
+    Url=@Url UrlCaption=@UrlCaption 
+    CreateUrl=@CreateUrl SubTitle=@SubTitle 
+    UrlCaptionIcon=@UrlCaptionIcon OptionIcon=@OptionIcon
+    NextPage=@NextPage PreviousPage=@PreviousPage
+    FirstPage=@FirstPage LastPage=@LastPage
+    CurrentPage=@CurrentPage TotalPages=@TotalPages
+    WeProduct=true WeCost=@WeCost WeRealStock=@WeRealStock WeRetail=@WeRetail
+/>
+
+<div class="row bg-white p-3" style="min-height:75vh !important;">
+    <div class="col-12">
+        <div class="row bg-unique shadow-sm txtshadow rounded-0 text-unique">
+            <div @onclick=@(()=> OrderById()) class="col-1 text-center py-3 fw-bolder" style="cursor:pointer !important;">
+                #
+            </div>
+            <div class="col-md-1 py-3 d-none d-md-block text-start  ps-0">
+                <ul @onclick=@(()=> OrderById()) class="d-flex flex-row p-0 m-0" style="cursor:pointer !important;">
+                    <li class="p-0 m-0 text-start pe-1" style="cursor:pointer !important;">
+                        ID
+                    </li>
+                    <li class="p-0 m-0 px-1 ms-1 text-start ">
+                        <i class="fs-6 bi-arrow-@ArrowId-circle text-white fw-bolder px-1 mx-1"></i>
+                    </li>
+                </ul>
+            </div>
+            <div class="col-md-2 col-4 py-3 text-start">
+                <ul @onclick=@(()=> OrderByItem()) class="d-flex flex-row p-0 m-0" style="cursor:pointer !important;">
+                    <li class="p-0 m-0 text-start pe-1" >
+                        Item
+                    </li>
+                    <li class="p-0 m-0 px-1 ms-1 text-start ">
+                        <i class="fs-6 bi-arrow-@ArrowItem-circle text-white fw-bolder px-1 mx-1" style="cursor:pointer !important;"></i>
+                    </li>
+                </ul>
+            </div>
+            <div class="col-md-1 d-none d-md-block py-3 text-center ">
+                <ul class="d-flex flex-row p-0 m-0">
+                    <li class="p-0 m-0 text-start pe-lg-1" style="cursor:pointer !important;">
+                        Open
+                    </li>
+                    <li class="p-0 m-0 px-1 ms-1 text-start d-none d-lg-block ">
+                        <i class="fs-6 bi-arrow-down-circle text-white fw-bolder px-1 mx-1" style="cursor:pointer !important;"></i>
+                    </li>
+                </ul>
+            </div>
+            <div class="col-md-1 d-none d-md-block py-3 text-center ">
+                <ul class="d-flex flex-row p-0 m-0">
+                    <li class="p-0 m-0 text-start pe-lg-1" style="cursor:pointer !important;">
+                        Purchd
+                    </li>
+                    <li class="p-0 m-0 px-1 ms-1 text-start d-none d-lg-block ">
+                        <i class="fs-6 bi-arrow-down-circle text-white fw-bolder px-1 mx-1" style="cursor:pointer !important;"></i>
+                    </li>
+                </ul>
+            </div>
+            <div class="col-md-1 d-none d-md-block py-3 text-center ">
+                <ul class="d-flex flex-row p-0 m-0">
+                    <li class="p-0 m-0 text-start pe-lg-1" style="cursor:pointer !important;">
+                        Adjsd
+                    </li>
+                    <li class="p-0 m-0 px-1 ms-1 text-start d-none d-lg-block ">
+                        <i class="fs-6 bi-arrow-down-circle text-white fw-bolder px-1 mx-1" style="cursor:pointer !important;"></i>
+                    </li>
+                </ul>
+            </div>
+            <div class="col-md-1 d-none d-md-block py-3 text-center ">
+                <ul class="d-flex flex-row p-0 m-0">
+                    <li class="p-0 m-0 text-start pe-lg-1" style="cursor:pointer !important;">
+                        Sold
+                    </li>
+                    <li class="p-0 m-0 px-1 ms-1 text-start d-none d-lg-block ">
+                        <i class="fs-6 bi-arrow-down-circle text-white fw-bolder px-1 mx-1" style="cursor:pointer !important;"></i>
+                    </li>
+                </ul>
+            </div>
+            <div class="col-md-1 col-2 py-3 text-center">
+                <ul class="d-flex flex-row p-0 m-0">
+                    <li class="p-0 m-0 text-start pe-lg-1" style="cursor:pointer !important;">
+                        Stock
+                    </li>
+                    <li class="p-0 m-0 px-1 ms-1 text-start d-none d-lg-block ">
+                        <i class="fs-6 bi-arrow-down-circle text-white fw-bolder px-1 mx-1" style="cursor:pointer !important;"></i>
+                    </li>
+                </ul>
+            </div>
+            <div class="col-3 col-md-2 py-3 text-start">
+                <ul class="d-flex flex-row p-0 m-0">
+                    <li class="p-0 m-0 text-start pe-lg-1" style="cursor:pointer !important;">
+                        Sales
+                    </li>
+                    <li class="p-0 m-0 px-1 ms-1 text-start d-none d-lg-block ">
+                        <i class="fs-6 bi-arrow-down-circle text-white fw-bolder px-1 mx-1" style="cursor:pointer !important;"></i>
+                    </li>
+                </ul>
+            </div>
+            <div class="col-md-1 col-2 py-3 text-center d-none d-sm-block">
+                Action
+            </div>
+        </div>
+        @{
+            if(!TheseProducts.Any()){
+                <div class="container text-center">
+                    <p class="p-3  fs-4 text-unique fw-lighter opacity-75 text-capitalize">-- : --</p>
+                </div>
+            }
+            else{
+                foreach(var item in TheseProducts){
+                    RealStock = 0;
+                    RetailPrice = 0.0;
+                    AsAdjStk =0;
+                    AsOpenStk =0;
+                    AsPurchStk = 0;
+                    AsSoldStk = 0;
+                    
+                    AsPurchStk = (int)(item.ProductGrn.Any() ? item.ProductGrn.Sum(a => a.ProductItemQty) : 0);
+                    AsOpenStk = (int)(item.ProductOpen.Any() ? item.ProductOpen.Sum(a => a.ProductItemQty) : 0);
+                    AsAdjStk = (int)(item.StockAdjustmentProduct.Any() ? item.StockAdjustmentProduct.Sum(b => b.QtyAdjusted) : 0);
+                    AsSoldStk = (int)(item.ProductBill.Any() ? item.ProductBill.Sum(a => a.QtyPurchased) : 0);
+                    
+                    RealStock = (int)((AsOpenStk + AsPurchStk + AsAdjStk) - (AsSoldStk));
+                    RetailPrice = item.ProductPrice.Any() ? item.ProductPrice.LastOrDefault().LatestPrice : 0.0;
+                    
+                    if(RealStock == 0){
+                        Colours = "text-success";
+                    }else if(RealStock < 0){
+                        Colours = "text-danger";
+                    }else{
+                        Colours = "";
+                    }
+                    
+                    <div class="row rounded-0 mt-0 text-unique border-bottom">
+                        <div class="col-1 text-center py-2 txtshadow">
+                            @(item.ProductId)
+                        </div>
+                        <div class="col-md-1 d-none d-md-block py-1 ps-0 ">
+                            <a class="p-0 m-0" href="Products/Detail/@item.ProductId">
+                                <ul class="p-0 m-0 d-flex flex-column text-start">
+                                    <li class="p-0 m-0 text-primary">@(item.ProductCode + item.ProductId)</li>
+                                    <li class="rounded-3 m-0 opacity-75" style="font-size:0.8rem !important; width:fit-content;">@(item.ProductBarcode.Any() ? item.ProductBarcode.FirstOrDefault().BarcodeNumber : "--:--")</li>
+                                </ul>
+                            </a>
+                        </div>
+                        <div class="col-md-2 col-4 py-1 text-start">
+                            <a class="p-0 m-0" href="Products/Detail/@item.ProductId">
+                                <ul class="p-0 m-0 d-flex flex-column text-start">
+                                    <li class="p-0 m-0 d-lg-block d-none text-unique text-capitalize ">@(item.ProductCaption.Length > 20 ? item.ProductCaption.Substring(0,18) + " .." : item.ProductCaption)</li>
+                                    <li class="p-0 m-0 d-lg-none text-unique text-capitalize ">@(item.ProductCaption.Length > 13 ? item.ProductCaption.Substring(0,9) + " .." : item.ProductCaption)</li>
+                                    <ul class="p-0 m-0 d-flex flex-row text-start">
+                                        <li class="rounded-3 m-0 opacity-75 text-capitalize" style="font-size:0.8rem !important; width:fit-content;"><i class=" bi-at"></i>@(item.Brand.BrandCaption.Length > 10 ? item.Brand.BrandCaption.Substring(0,6) + " .." : item.Brand.BrandCaption )</li>
+                                        <li class="rounded-3 m-0 opacity-75 text-capitalize mx-1" style="font-size:0.8rem !important; width:fit-content;">|</li>
+                                        <li class="rounded-3 m-0 opacity-75 text-capitalize" style="font-size:0.8rem !important; width:fit-content;"><i class="bi-columns-gap" style="font-size:0.67rem !important;"></i> @(item.Category.CategoryCaption.Length > 10 ? item.Category.CategoryCaption.Substring(0,6) + " .." : item.Category.CategoryCaption )</li>
+                                    </ul>
+                                </ul>
+                            </a>
+                        </div>
+                        <div class="col-md-1 d-none d-md-block py-2 text-center text-capitalize">
+                            @AsOpenStk
+                        </div>
+                        <div class="col-md-1 d-none d-md-block py-2 text-center text-capitalize">
+                            @AsPurchStk
+                        </div>
+                        <div class="col-md-1 d-none d-md-block py-2 text-center text-capitalize">
+                            @AsAdjStk
+                        </div>
+                        <div class="col-md-1 d-none d-md-block py-2 text-center text-capitalize">
+                            @AsSoldStk
+                        </div>
+                        <div class="col-md-1 col-2 py-2 @Colours text-center " style="color:#0d6efd !important;">
+                            @RealStock
+                        </div>
+                        <div class="col-md-2 col-3 py-1 text-start">
+                            <ul class="p-0 m-0 d-flex flex-column text-start">
+                                <li class="p-0 m-0 text-unique">&#64; @RetailPrice.ToString("n0")</li>
+                                <li class="rounded-3 m-0 opacity-75" style="font-size:0.8rem !important; width:fit-content;">&sum; @((RetailPrice * RealStock).ToString("n0")) </li>
+                            </ul>
+                        </div>
+                        
+                        <div class="col-md-1 col-2 py-3 px-0 text-center" style="padding-top:0.8rem !important;">
+                            <a href="Products/Edit/@item.ProductId" class=" text-primary px-md-3 px-2 py-1 border border-2" style="width:fit-content; margin:1px auto;">Edit</a>
+                        </div>
+                    </div>
+                }
+            }
+        }
+    </div>
+</div>
+
+
+@code{
+    //  Options Variables
+        public string Title = "Products";
+        public string SubTitle = "List view";
+        public string Icon = "stack";
+        public string OptionIcon = "view-stacked";
+        public string Url = "Products/Detail/0";
+        public string UrlCaption = "Detail View";
+        public string UrlCaptionIcon = "ui-checks-grid";
+        public string CreateUrl = "Products/Create";
+        
+    //  Data Variables
+        private List<Product> TheseProducts = new();
+        private List<Product> WeProducts = new();
+        private double WeCost = 0.0;
+        private double WeRetail = 0.0;
+        private int WeRealStock = 0;
+        private int CurrentPage = 0;
+        private int PageSize = 9;
+        private int TotalPages = 1;
+        private int RealStock = 0;
+        private double RetailPrice = 0.0;
+        private string Colours = "";
+        private int AsOpenStk = 0;
+        private int AsAdjStk = 0;
+        private int AsSoldStk = 0;
+        private int AsPurchStk = 0;
+        private bool AscendId = true;
+        private string ArrowId = "down";
+        private bool AscendItem = true;
+        private string ArrowItem = "down";
+        
+        protected override async Task OnInitializedAsync(){
+            await base.OnInitializedAsync();
+            await NextPage();
+        }
+    
+    private async Task NextPage(){
+        using(var repo = new UnitOfWork(MyFactory.CreateDbContext())){
+            
+            double Num = (double)(repo.Products.GetNoRecords())/PageSize;
+            TotalPages = (int)(Math.Ceiling(Num));
+            
+            if(CurrentPage < TotalPages ){
+               CurrentPage ++ ;
+            }
+            else{
+                CurrentPage = TotalPages; 
+            }
+            
+            TheseProducts = await repo.Products.GetAllProductsDetailedAsync(CurrentPage, PageSize);
+            
+            await repo.CompleteAsync();
+            repo.Dispose(); 
+        }
+        
+        StateHasChanged();
+        await EntireStock();
+    }
+    
+    private async Task PreviousPage(){
+        using(var repo = new UnitOfWork(MyFactory.CreateDbContext())){
+            
+            double Num = (double)(repo.Products.GetNoRecords())/PageSize;
+            TotalPages = (int)(Math.Ceiling(Num));
+            
+            if(CurrentPage > 1 ){
+               CurrentPage -- ;
+            }
+            else{
+                CurrentPage = 1; 
+            }
+            
+            TheseProducts = await repo.Products.GetAllProductsDetailedAsync(CurrentPage, PageSize);
+            
+            await repo.CompleteAsync();
+            repo.Dispose(); 
+        }
+        
+        StateHasChanged();
+        await EntireStock();
+    }
+    
+    private async Task FirstPage(){
+        using(var repo = new UnitOfWork(MyFactory.CreateDbContext())){
+            
+            double Num = (double)(repo.Products.GetNoRecords())/PageSize;
+            TotalPages = (int)(Math.Ceiling(Num));
+            CurrentPage = 1; 
+            TheseProducts = await repo.Products.GetAllProductsDetailedAsync(CurrentPage, PageSize);
+            
+            await repo.CompleteAsync();
+            repo.Dispose(); 
+        }
+        
+        StateHasChanged();
+        await EntireStock();
+    }
+    
+    private async Task LastPage(){
+        using(var repo = new UnitOfWork(MyFactory.CreateDbContext())){
+            
+            double Num = (double)(repo.Products.GetNoRecords())/PageSize;
+            TotalPages = (int)(Math.Ceiling(Num));
+            CurrentPage = TotalPages; 
+            TheseProducts = await repo.Products.GetAllProductsDetailedAsync(CurrentPage, PageSize);
+            
+            await repo.CompleteAsync();
+            repo.Dispose(); 
+        }
+        
+        StateHasChanged();
+        await EntireStock();
+    }  
+    
+    private async Task EntireStock(){
+        WeCost = 0.0;
+        WeRealStock = 0;
+        WeRetail = 0.0;
+        using(var repo = new UnitOfWork(MyFactory.CreateDbContext())){
+            
+            WeProducts = await repo.Products.GetAllProductsDetailedAsync(1, repo.Products.GetNoRecords());
+            
+            foreach(var item in WeProducts){
+                var IAsPurchStk = (int)(item.ProductGrn.Any() ? item.ProductGrn.Sum(a => a.ProductItemQty) : 0);
+                var IAsOpenStk = (int)(item.ProductOpen.Any() ? item.ProductOpen.Sum(a => a.ProductItemQty) : 0);
+                var IAsAdjStk = (int)(item.StockAdjustmentProduct.Any() ? item.StockAdjustmentProduct.Sum(b => b.QtyAdjusted) : 0);
+                var IAsSoldStk = (int)(item.ProductBill.Any() ? item.ProductBill.Sum(a => a.QtyPurchased) : 0);
+                
+                var IRealStock = (int)((IAsOpenStk + IAsPurchStk + IAsAdjStk) - (IAsSoldStk));
+                var IRetailPrice = item.ProductPrice.Any() ? item.ProductPrice.LastOrDefault().LatestPrice : 0.0;
+                
+                if(item.ProductGrn.Any()){
+                    var ICost = (double)(item.ProductGrn.LastOrDefault().ProductItemCost);
+                    WeCost += (ICost * IRealStock);
+                }else{
+                    var ICost = (double)(item.ProductOpen.Any() ? item.ProductOpen.LastOrDefault().ProductItemCost : 0.0);
+                    WeCost += (ICost * IRealStock);
+                }
+                
+                WeRealStock += (IRealStock);
+                WeRetail += (IRetailPrice * IRealStock);
+            }
+            
+            await repo.CompleteAsync();
+            repo.Dispose(); 
+        }
+    }
+    
+// Order conditions   
+ 
+    private void OrderById(){
+        if(AscendId){
+            AscendId = false;
+            TheseProducts = (
+                from x in TheseProducts orderby x.ProductId descending select x
+            ).ToList();
+            ArrowId = "up";
+        }else{
+            AscendId = true;
+            TheseProducts = (
+                from x in TheseProducts orderby x.ProductId ascending select x
+            ).ToList();
+            ArrowId = "down";
+        }
+        StateHasChanged();
+    }
+    
+    private void OrderByItem(){
+        if(AscendItem){
+            AscendItem = false;
+            TheseProducts = (
+                from x in TheseProducts orderby x.ProductCaption descending select x
+            ).ToList();
+            ArrowItem = "up";
+        }else{
+            AscendItem = true;
+            TheseProducts = (
+                from x in TheseProducts orderby x.ProductCaption ascending select x
+            ).ToList();
+            ArrowItem = "down";
+        }
+        StateHasChanged();
+    }
+}

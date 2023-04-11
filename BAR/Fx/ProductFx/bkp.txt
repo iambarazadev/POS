@@ -1,0 +1,454 @@
+@page "/Products/Create"
+@page "/Products/Edit/{Sn:int}"
+
+@using Microsoft.EntityFrameworkCore
+@inject IDbContextFactory<BarContext> MyFactory
+@inject NavigationManager Navigation
+
+<PageTitle>Product | @SubTitle </PageTitle>
+
+<EditForm Model="ThisProduct" OnValidSubmit="ProcessAndSave">
+    <DataAnnotationsValidator/>
+    <Options 
+        Title=@Title Icon=@Icon Url=@Url UrlCaption=@UrlCaption UrlCaptionIcon=@UrlCaptionIcon
+        SubTitle=@SubTitle 
+        OptionIcon=@OptionIcon ShowSaveButton=@ShowSaveButton Funga=@Funga
+        AddOrUpdateItem=@AddOrUpdateItem AddOrUpdateThisItem=@SubTitle
+    />
+    <div class="row text-unique mb-3 p-3 bg-white">
+        <div class="col-lg-3 col-md-2 col-12">
+            @*Empty Div for position centering*@
+        </div>
+        <div class="col-lg-6 col-md-8 col-12 ps-md-0 pb-3 text-start">
+            <div class="container pt-2 pb-3">
+                <div class="form-floating mt-2 rounded-0 py-0">
+                    <InputSelect @bind-Value=@ThisProduct.CategoryId  @bind-Value:event="onchange" required  class="form-select text-capitalize border-0 bg-xss text-unique fw-bolder rounded-0 " id="floatingSelect" aria-label="Floating label select example">
+                        <option>--:--</option>
+                        
+                        @{
+                            if(TheseCategories != null && TheseCategories.Count > 0){
+                                foreach(var cat in TheseCategories){
+                                    <option class="text-unique text-capitalize" value=@cat.CategoryId>@cat.CategoryCaption</option>
+                                }
+                            }
+                        }
+                        
+                    </InputSelect>
+                    <label for="floatingSelect">Categories</label>
+                </div>
+                <div class="form-floating mt-2 rounded-0">
+                    <InputSelect @bind-Value=@ThisProduct.BrandId @bind-Value:event="onchange" required class="form-select border-0 bg-xss text-capitalize text-unique fw-bolder rounded-0 " id="floatingSelect" aria-label="Floating label select example"> 
+                        <option>--:--</option>
+                        
+                        @{  
+                            if(TheseBrands != null && TheseBrands.Count > 0){
+                                foreach(var bra in TheseBrands){
+                                    <option class="text-unique text-capitalize" value="@bra.BrandId">@bra.BrandCaption</option>
+                                }
+                            }
+                        }
+                        
+                    </InputSelect>
+                    <label for="floatingSelect">Manufacturer | Brand Name</label>
+                </div>
+                <div class="form-floating mt-2 rounded-0">
+                    <InputText required @bind-Value=@ThisProduct.ProductCaption class="form-control bg-xss border-0 text-unique fw-bolder rounded-0 text-capitalize " id="floatingInput" placeholder="Product Name (Caption / Short Description)" />
+                    <label for="floatingInput">
+                        Product Name
+                    </label>
+                    @*<ValidationMessage For=" () => Fx.ProductCaption " />*@
+                </div>
+                <div class="form-floating mt-2 rounded-0 py-0">
+                    <InputSelect @bind-Value=@ThisProduct.TaxId @bind-Value:event="onchange" required  class="form-select text-capitalize border-0 bg-xss text-unique fw-bolder rounded-0 " id="floatingSelect" aria-label="Floating label select example">
+                        
+                        @{
+                            if(TheseTaxes != null && TheseTaxes.Count > 0){
+                                foreach(var tx in TheseTaxes){
+                                    <option class="text-unique text-capitalize" value=@tx.TaxId>@(tx.TaxValue)%  @tx.TaxCaption</option>
+                                }
+                            }
+                        }
+                        
+                    </InputSelect>
+                    <label for="floatingSelect">Tax Level</label>
+                </div>
+                <div class="row">
+                    <div class="col-8">   
+                        <div class="form-floating mt-2 rounded-0">
+                            <InputText @bind-Value=@ThisProductBarcode.BarcodeNumber @onfocusout=@(()=> AppendBarcode(ThisProductBarcode.BarcodeNumber)) type="text" class="form-control bg-xss border-0 text-unique fw-bolder rounded-0 " id="floatingInput" placeholder="Product Name (Caption / Short Description)"/>
+                            <label for="floatingInput">
+                                Barcode
+                            </label>
+                        </div>
+                    </div>
+                    <div class="col-4 py-3">
+                        <li class="btn rounded-circle border border-2" style="cursor : pointer;"><i class="bi bi-plus-circle-fill fs-5"></i></li>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-12 text-center">
+                        <ul class="d-flex flex-row justify-content-sm-start justify-content-center flex-wrap p-0 m-0 pt-2">
+                            
+                            @{
+                                foreach(var item in ThisProduct.ProductBarcode){
+                                    
+                                    <button @onclick=@(()=>RemoveBarcode(item)) type="button" class="btn btn-primary position-relative fw-bolder me-3 mb-3 rounded-0">
+                                        @item.BarcodeNumber
+                                        <span @onclick=@(()=>RemoveBarcode(item)) class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger">
+                                            x
+                                        </span>
+                                    </button>
+                                }
+                            }
+                            
+                        </ul>
+                    </div>
+                </div>
+                <div class="row p-0 m-0">
+                    <div class="col-12 text-start pb-2 px-0">
+                        <InputTextArea @bind-Value=ThisProduct.Specs.SpecsDescription class="form-control rounded-0 border-0 w-100 fw-bolder text-unique text-capitalize bg-xss" rows="3" placeholder="Add Description" required></InputTextArea>
+                        @*<ValidationMessage For=" () => Fx.Description " />*@
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-lg-3 col-md-2 col-12">
+            @*Empty Div for centering*@
+        </div>
+        <div class="col-md-6 col-12  pe-md-0 text-start d-none">
+            <div class="container bg-xss pb-3 pt-2">
+                @*Dynamic Components Comes here*@
+                    <div class="row mt-2">
+                        <div class="col-5 text-end">
+                            Product Type :
+                        </div>
+                        <div class="col-7 pe-4 text-start">
+                            <select required @bind=@ThisProduct.Specs.SpecsCode @bind:event="onchange" type="text" class="form-control form-select bg-xss border-0 mx-2 text-unique fw-bolder rounded-0 " style="font-size:0.8rem;">
+                                <option>--:--</option>
+                                <option value="computer">Computer</option>
+                                <option value="phone">Phone</option>
+                                <option value="storage">Storage Device</option>
+                                <option value="usb">UsbCables</option>
+                                <option value="power">PowerCables</option>
+                                <option value="other">Other</option>
+                            </select>
+                        </div>
+                    </div>
+                    @{
+                        if(ThisProduct.Specs.SpecsCode == "computer" || ThisProduct.Specs.SpecsCode == "phone"){
+                            @*Computer, SmartPhone, SmartWatch and Tablets component*@
+                                <div class="row p-0 m-0 mt-2">
+                                    <div class="col-5 text-end py-2">
+                                        PROCESSOR : 
+                                    </div>
+                                    <div class="col-7 text-start">
+                                        <input @bind=@ThisProduct.Specs.Processor placeholder="intel 2.5 core i7" type="text" class="form-control  border-0 mx-2 text-unique fw-bolder rounded-0 text-capitalize" style="font-size:0.8rem;">
+                                    </div>
+                                </div>
+                                <div class="row p-0 m-0 mt-1">
+                                    <div class="col-5 text-end py-2">
+                                        RAM[GB] : 
+                                    </div>
+                                    <div class="col-7 text-start">
+                                        <input @bind=@ThisProduct.Specs.Ram placeholder="8" type="text" class="form-control  border-0 mx-2 text-unique fw-bolder rounded-0 " style="font-size:0.8rem;">
+                                    </div>
+                                </div>
+                                <div class="row p-0 m-0 mt-1">
+                                    <div class="col-5 text-end py-2">
+                                        STORAGE SIZE [GB] : 
+                                    </div>
+                                    <div class="col-7 text-start">
+                                        <input @bind=@ThisProduct.Specs.StorageSize placeholder="1000" type="text" class="form-control  border-0 mx-2 text-unique fw-bolder rounded-0 " style="font-size:0.8rem;">
+                                    </div>
+                                </div>
+                                <div class="row p-0 m-0 mt-1">
+                                    <div class="col-5 text-end py-2">
+                                        STORAGE TYPE : 
+                                    </div>
+                                    <div class="col-7 text-start">
+                                        <select required @bind=@ThisProduct.Specs.StorageType @bind:event="onchange"  type="text" class="form-control form-select  border-0 mx-2 text-unique fw-bolder rounded-0 " style="font-size:0.8rem;">
+                                            <option>--:--</option>
+                                            <option value="SSD">SSD</option>
+                                            <option value="HDD">HDD</option>
+                                            <option value="FLASH DISK">FLASH DISK</option>
+                                            <option value="MEMORY CARD">MEMORY CARD</option>
+                                            <option value="OPTICAL DISC">OPTICAL DISK</option>
+                                            <option value="OTHER">OTHER</option>
+                                        </select>
+                                    </div>
+                                </div>
+                                <div class="row p-0 m-0 mt-1">
+                                    <div class="col-5 text-end py-2">
+                                        SIM CARD SLOT : 
+                                    </div>
+                                    <div class="col-7 text-start">
+                                        <select @bind=@ThisProduct.Specs.SimCardSlots class="form-control form-select  border-0 mx-2 text-unique fw-bolder rounded-0 " style="font-size:0.8rem;">
+                                            <option value="">--:--</option>
+                                            <option value="1">1</option>
+                                            <option value="2">2</option>
+                                            <option value="3">3</option>
+                                            <option value="3">4</option>
+                                            <option value="3">5</option>
+                                        </select>
+                                    </div>
+                                </div>
+                                <div class="row p-0 m-0 mt-1">
+                                    <div class="col-5 text-end py-2">
+                                        DISPLAY : 
+                                    </div>
+                                    <div class="col-7 text-start">
+                                        <input @bind=@ThisProduct.Specs.DisplayTypeSize placeholder="LCD 2.3 x 3.5 inch" type="text" class="form-control  border-0 mx-2 text-unique fw-bolder rounded-0 " style="font-size:0.8rem;">
+                                    </div>
+                                </div>
+                                <div class="row p-0 m-0 mt-1">
+                                    <div class="col-5 text-end py-2">
+                                        OS : 
+                                    </div>
+                                    <div class="col-7 text-start">
+                                        <input @bind=@ThisProduct.Specs.Os placeholder="Linux x64" type="text" class="form-control border-0 mx-2 text-unique fw-bolder rounded-0 text-capitalize " style="font-size:0.8rem;">
+                                    </div>
+                                </div>
+                                <div class="row p-0 m-0 mt-1">
+                                    <div class="col-5 text-end py-0">
+                                        <label class="form-check-label" for="Bluetooth">
+                                            M-CARD :
+                                        </label>
+                                    </div>
+                                    <div class="col-7 text-start py-0 px-4">
+                                        <div class="form-check form-switch">
+                                            <input @bind=@ThisProduct.Specs.MemoryCard  class="form-check-input" type="checkbox" id="Bluetooth" name="Bluetooth" >
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="row p-0 m-0 mt-1">
+                                    <div class="col-5 text-end py-0">
+                                        <label class="form-check-label" for="Wifi">
+                                            WLAN :
+                                        </label>
+                                    </div>
+                                    <div class="col-7 text-start py-0 px-4">
+                                        <div class="form-check form-switch">
+                                            <input @bind=@ThisProduct.Specs.WiFi  class="form-check-input" type="checkbox" id="Wifi" name="Wifi" >
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="row p-0 m-0 mt-1">
+                                    <div class="col-5 text-end py-0">
+                                        <label class="form-check-label" for="Bluetooth">
+                                            BLUE TOOTH :
+                                        </label>
+                                    </div>
+                                    <div class="col-7 text-start py-0 px-4">
+                                        <div class="form-check form-switch">
+                                            <input @bind=@ThisProduct.Specs.Bluetooth class="form-check-input" type="checkbox" id="Bluetooth" name="Bluetooth">
+                                        </div>
+                                    </div>
+                                </div>
+                            @*End Computer, SmartPhone, SmartWatch and Tablets component*@
+                        }
+                        else if(ThisProduct.Specs.SpecsCode == "usb"){
+                            @*Start Cable and usb component*@
+                                <div class="row p-0 m-0 mt-2">
+                                    <div class="col-5 text-end py-2">
+                                        USB TYPE : 
+                                    </div>
+                                    <div class="col-7 text-start">
+                                        <select @bind=@ThisProduct.Specs.CableType @bind:event = "onchange" placeholder="2" type="text" class="form-control form-select  border-0 mx-2 text-unique fw-bolder rounded-0 " style="font-size:0.8rem;">
+                                            <option>--:--</option>
+                                            <option value="TYPE C TO TYPE C">TYPE C TO TYPE C</option>
+                                            <option value="TYPE C TO TYPE B">TYPE C TO TYPE B</option>
+                                            <option value="TYPE B TO TYPE B">TYPE B TO TYPE B</option>
+                                            <option value="OTHER">OTHER</option>
+                                        </select>
+                                    </div>
+                                </div>
+                                <div class="row p-0 m-0 mt-1">
+                                    <div class="col-5 text-end py-2">
+                                        LENGTH[M] : 
+                                    </div>
+                                    <div class="col-7 text-start">
+                                        <input @bind=@ThisProduct.Specs.CableLength placeholder="1M" type="text" class="form-control  border-0 mx-2 text-unique fw-bolder rounded-0 " style="font-size:0.8rem;">
+                                    </div>
+                                </div>
+                            @*End Cable component*@
+                        }
+                        else if(ThisProduct.Specs.SpecsCode == "power"){
+                            @*Start Power Cable*@
+                                <div class="row p-0 m-0 mt-2">
+                                    <div class="col-5 text-end py-2">
+                                        POWER CABLE TYPE : 
+                                    </div>
+                                    <div class="col-7 text-start">
+                                        <select @bind=@ThisProduct.Specs.CableType @bind:event="onchange" placeholder="2" type="text" class="form-control form-select  border-0 mx-2 text-unique fw-bolder rounded-0 " style="font-size:0.8rem;">
+                                            <option value="LAPTOP CHARGER">LAPTOP CHARGER</option>
+                                            <option value="DIGITAL DEVICE CHARGER">DIGITAL DEVICE CHARGER</option>
+                                            <option value="SOCKET EXTENSION">SOCKET EXTENSION</option>
+                                            <option value="OTHER POWER CABLE">OTHER POWER CABLE</option>
+                                        </select>
+                                    </div>
+                                </div>
+                                <div class="row p-0 m-0 mt-1">
+                                    <div class="col-5 text-end py-2">
+                                        LENGTH : 
+                                    </div>
+                                    <div class="col-7 text-start">
+                                        <input @bind=@ThisProduct.Specs.CableLength placeholder="1M" type="text" class="form-control  border-0 mx-2 text-unique fw-bolder rounded-0 " style="font-size:0.8rem;">
+                                    </div>
+                                </div>
+                            @*end power cable*@
+                        }
+                        else if(ThisProduct.Specs.SpecsCode == "storage"){
+                            @*Cables and USB*@
+                                <div class="row p-0 m-0 mt-2">
+                                    <div class="col-5 text-end py-2">
+                                        STORAGE TYPE : 
+                                    </div>
+                                    <div class="col-7 text-start">
+                                        <select @bind=@ThisProduct.Specs.StorageType @bind:event="onchange" placeholder="2" type="text" class="form-control form-select  border-0 mx-2 text-unique fw-bolder rounded-0 " style="font-size:0.8rem;">
+                                            <option value="TYPE C TO TYPE C">SSD</option>
+                                            <option value="TYPE C TO TYPE B">HDD</option>
+                                            <option value="TYPE B TO TYPE B">FLASH DISK</option>
+                                            <option value="TYPE B TO TYPE B">MEMORY CARD</option>
+                                            <option value="TYPE B TO TYPE B">OPTICAL DISK</option>
+                                            <option value="OTHER">OTHER</option>
+                                        </select>
+                                    </div>
+                                </div>
+                                <div class="row p-0 m-0 mt-1">
+                                    <div class="col-5 text-end py-2">
+                                        STORAGE SIZE (GB) : 
+                                    </div>
+                                    <div class="col-7 text-start">
+                                        <input @bind=@ThisProduct.Specs.StorageSize placeholder="16" type="text" class="form-control  border-0 mx-2 text-unique fw-bolder rounded-0 " style="font-size:0.8rem;">
+                                    </div>
+                                </div>
+                            @*End Storages*@
+                        }
+                    }
+                @*Dynamic Components Ends here*@
+            </div>
+        </div>
+    </div>
+</EditForm>
+
+@code{
+    
+    // Url Parameter Variables
+    [Parameter]
+    public int Sn {get;set;}
+    
+    // Options Variables
+    public string Title = "Products";
+    public string SubTitle = "New Product";
+    public string OptionIcon = "pencil-square";
+    public string Icon = "stack";
+    public string UrlCaptionIcon = "ui-checks-grid";
+    public string Url = "Products/Detail/0";
+    public string UrlCaption = "Detail View";
+    public bool ShowSaveButton = true;
+    public string Funga = "d-none";
+    public bool AddOrUpdateItem = true;
+    
+    // Data Variables
+    private Product ThisProduct = new();
+    private string Barcode = "";
+    private ProductBarcode ThisProductBarcode = new();
+    private Barcode ThisBarcode = new();
+    private List<Category> TheseCategories = new();
+    private List<Tax> TheseTaxes = new();
+    private List<Brand> TheseBrands = new();
+    private int LinkedIn = 0;
+    private bool Wifi = true;
+    private bool Bluetooth = true;
+    
+    protected override async Task OnInitializedAsync(){
+        await base.OnInitializedAsync();
+        ThisBarcode = new();
+        ThisProduct.Specs = new();
+        ThisProduct.ProductBarcode = new();
+        ThisProductBarcode = new();
+        
+        using(var repo = new UnitOfWork(MyFactory.CreateDbContext())){
+            TheseCategories = await repo.Categories.GetAllRecords(repo.Categories.GetNoRecords(),1);
+            TheseBrands = await repo.Brands.GetAllRecords(repo.Brands.GetNoRecords(),1);
+            TheseTaxes = await repo.Taxes.GetAllRecords(repo.Taxes.GetNoRecords(),1);
+            
+            await repo.CompleteAsync();
+            repo.Dispose();
+        }
+        
+        await Start(Sn);
+    }
+    
+    private async Task Start(int TheKey){
+        
+        if(TheKey <= 0){
+            ThisProduct = new();
+            ThisBarcode = new();
+            ThisProduct.Specs = new();
+            ThisProduct.ProductBarcode = new();
+            ThisProductBarcode = new();
+        
+        }
+        else{
+            using(var repo = new UnitOfWork(MyFactory.CreateDbContext())){
+                ThisProduct = await repo.Products.GetDetailedProductAsync(TheKey);
+                
+                await repo.CompleteAsync();
+                repo.Dispose();
+            }
+            SubTitle = "Edit Product" ;
+            
+        }
+    }
+    
+    private void AppendBarcode(string code){
+        if(code != ""){
+            ThisBarcode = new();
+            ThisProductBarcode.Barcode = ThisBarcode;
+            ThisProductBarcode.BarcodeNumber = code;
+            ThisProduct.ProductBarcode.Add(ThisProductBarcode);
+        }
+        ThisBarcode = new();
+        ThisProductBarcode = new();
+    }
+    
+    private async Task RemoveBarcode(ProductBarcode code){
+        await Task.Run(()=>ThisProduct.ProductBarcode.Remove(code));
+    }
+    
+    private async Task ProcessAndSave(){
+        if(ThisProduct != null){
+            using(var repo = new UnitOfWork(MyFactory.CreateDbContext())){
+                if(ThisProduct.ProductId > 0){
+                    
+                    await Task.Run(()=> repo.Products.Update(ThisProduct));
+                    await repo.CompleteAsync();
+                    
+                    LinkedIn = ThisProduct.ProductId;
+                    Navigation.NavigateTo("Products/Detail/" + LinkedIn);
+                    repo.Dispose();
+                }
+                else{
+                    
+                    ThisProduct.ProductCode = "PID";
+                    ThisProduct.ProductDateCreated = DateTime.Now;
+                    
+                    ThisProduct.UserId = 1;
+                    ThisProduct.Specs.SpecsId = default;
+                    
+                    await repo.Products.AddAsync(ThisProduct);
+                    await repo.CompleteAsync();
+                    repo.Dispose();
+                }
+            }
+        }
+        
+        ThisProduct = new();
+        ThisBarcode = new();
+        ThisProduct.Specs = new();
+        ThisProduct.ProductBarcode = new();
+        ThisProductBarcode = new();
+        StateHasChanged(); 
+    }
+}

@@ -1,0 +1,125 @@
+@using Microsoft.EntityFrameworkCore
+@inject IDbContextFactory<BarContext> MyFactory
+@inject NavigationManager Navigation
+
+@{  
+    int index = 0;
+    foreach(var item in TheseStockAdjustmentProducts){
+        AtStock = item.StockAtAdjustmentTime;
+        InnerCostPerEach = item.CostAtAdjustmentTime;
+        Colouring = item.QtyAdjusted < 0 ? "text-danger" : "text-success";
+        index +=1;
+        <div class="row  bg-xs text-unique border-bottom">
+            <div class="col-1 text-center py-2 fw-bolder">@index</div>
+            <div class="col-lg-2 col-5 py-1 text-start">
+                <a class="p-0 m-0" href="Products/Detail/@item.Product.ProductId">
+                    <ul class="d-flex flex-column justify-content-start p-0 m-0 text-capitalize">
+                        <li class="text-primary">@(item.Product.ProductCaption.Length > 14 ? item.Product.ProductCaption.Substring(0,11) + " .." : item.Product.ProductCaption)</li>
+                        <li class=" m-0 opacity-75 " style="font-size:0.7rem !important; width:fit-content;">@(item.Product.ProductCode + item.Product.ProductId)</li>
+                    </ul>
+                </a>
+            </div>
+            <div class="col-1 d-none d-lg-block py-2 text-center ">
+                @AtStock
+            </div>
+            <div class="col-lg-1 col-2 py-2 text-center @Colouring ">@(item.QtyAdjusted > 0 ? "+" + item.QtyAdjusted : item.QtyAdjusted)</div>
+            <div class="col-1 d-none d-lg-block py-2 text-center">
+                @( (AtStock) + (item.QtyAdjusted))
+            </div>
+            <div class="col-2 py-1 d-none d-lg-block text-start">
+                <ul class="d-flex flex-column justify-content-start p-0 m-0">
+                    <li class="text-start">&#64; @InnerCostPerEach.ToString("n0")</li>
+                    <li class=" m-0 opacity-75 " style="font-size:0.7rem !important; width:fit-content;">
+                        &sum; @((((AtStock) * (InnerCostPerEach))).ToString("n0"))
+                    </li>
+                </ul>
+            </div>
+            <div class="col-lg-2 col-4 py-1 text-md-start text-center ">
+                <ul class="d-flex flex-column justify-content-start p-0 m-0">
+                    <li class="text-start @Colouring">&#64; @InnerCostPerEach.ToString("n0")</li>
+                    <li class=" m-0 opacity-75 @Colouring" style="font-size:0.7rem !important; width:fit-content;">&sum; @(item.QtyAdjusted > 0 ? "+" : "")@(((InnerCostPerEach) * (item.QtyAdjusted)).ToString("n0"))</li>
+                </ul>
+            </div>
+            <div class="col-2 py-1 d-none d-lg-block text-start ">
+                <ul class="d-flex flex-column justify-content-start p-0 m-0">
+                    <li class="text-start">&#64; @InnerCostPerEach.ToString("n0")</li>
+                    <li class=" m-0 opacity-75 " style="font-size:0.7rem !important; width:fit-content;">
+                        &sum; @((((AtStock) + (item.QtyAdjusted)) * (InnerCostPerEach)).ToString("n0"))
+                    </li>
+                </ul>
+            </div>
+        </div>
+    }
+    <DetailPagination 
+        InnerCurrentPage=@InnerCurrentPage InnerTotalPages=@InnerTotalPages
+        InnerNextPage=@InnerNextPage InnerPreviousPage=@InnerPreviousPage
+    />
+}
+
+
+@code{
+    
+    //  Inner Pagination 
+    private int InnerTotalPages = 1;
+    private int InnerCurrentPage = 1;
+    private int InnerPageSize = 7 ;
+        
+    // Parameter
+    [Parameter]
+    public StockAdjustment StockAdjustmentToCheck {get;set;}
+    private List<StockAdjustmentProduct> TheseStockAdjustmentProducts = new();
+    private double InnerCostPerEach = 0.0;
+    private string Colouring = "text-success";
+    private int AtStock = 0;
+    
+    protected override async Task OnInitializedAsync(){
+        await base.OnInitializedAsync();
+        await InnerNextPage();
+        StateHasChanged();
+    }
+    
+    private async Task InnerNextPage(){
+        
+        if(StockAdjustmentToCheck.StockAdjustmentProduct.Any()){
+            InnerTotalPages = ((int)(Math.Ceiling((double)(StockAdjustmentToCheck.StockAdjustmentProduct.Count)/InnerPageSize)));
+            
+            if(InnerCurrentPage < InnerTotalPages ){
+                InnerCurrentPage ++ ;
+            }
+            else{
+                InnerCurrentPage = InnerTotalPages; 
+            }
+            
+            TheseStockAdjustmentProducts = StockAdjustmentToCheck.StockAdjustmentProduct
+            .Skip((InnerCurrentPage - 1) * InnerPageSize)
+            .Take(InnerPageSize)
+            .ToList();
+        }
+        else{
+            StockAdjustmentToCheck.StockAdjustmentProduct = new();
+        }
+        StateHasChanged();
+    }
+    
+    private async Task InnerPreviousPage(){
+        if(StockAdjustmentToCheck.StockAdjustmentProduct.Any()){
+            InnerTotalPages = ((int)(Math.Ceiling((double)(StockAdjustmentToCheck.StockAdjustmentProduct.Count)/InnerPageSize)));
+            
+            if(InnerCurrentPage > 1 ){
+                InnerCurrentPage -- ;
+            }
+            else{
+                InnerCurrentPage = 1; 
+            }
+            
+            TheseStockAdjustmentProducts = StockAdjustmentToCheck.StockAdjustmentProduct
+            .Skip((InnerCurrentPage - 1) * InnerPageSize)
+            .Take(InnerPageSize)
+            .ToList();
+        }
+        else{
+            StockAdjustmentToCheck.StockAdjustmentProduct = new();
+        }
+        StateHasChanged();
+    }
+}

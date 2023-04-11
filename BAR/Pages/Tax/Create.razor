@@ -1,0 +1,110 @@
+@page "/Taxes/Create"
+@page "/Taxes/Edit/{Sn:int}"
+
+@using Microsoft.EntityFrameworkCore
+@inject IDbContextFactory<BarContext> MyFactory
+@inject NavigationManager Navigation
+
+<PageTitle>Tax | @SubTitle</PageTitle>
+
+<EditForm Model="ThisTax" OnValidSubmit="ProcessAndSave" autocomplete="off">
+    <Options 
+        Title=@Title Icon=@Icon Url=@Url
+        UrlCaption=@UrlCaption SubTitle=@SubTitle
+        UrlCaptionIcon=@UrlCaptionIcon ShowSaveButton=@ShowSaveButton Funga=@Funga
+    />
+    <div class="row text-unique bg-white" style="height:75vh !important;">
+        <div class="col-12 col-md-3 text-start"></div>
+        <div class="col-12 col-md-6 text-start">
+            <div class="container py-md-5">
+                <div class="form-floating mt-2 rounded-3">
+                    <DataAnnotationsValidator/>
+                    <input required @bind="ThisTax.TaxCaption" type="text" class="form-control bg-xs border-0 text-unique fw-bolder rounded-0 text-capitalize " id="floatingInput" placeholder="Tax Name (Caption / Short Description)">
+                    <label for="floatingInput">
+                        Tax Caption
+                    </label>
+                    <ValidationMessage For="() => ThisTax.TaxCaption"/>
+                </div>
+                <div class="form-floating mt-2 rounded-3">
+                    <DataAnnotationsValidator/>
+                    <input required @bind="ThisTax.TaxValue" type="text" class="form-control bg-xs border-0 text-unique fw-bolder rounded-0 text-capitalize " id="floatingInput" placeholder="Tax Name (Caption / Short Description)">
+                    <label for="floatingInput">
+                        Tax Percentage
+                    </label>
+                    <ValidationMessage For="() => ThisTax.TaxValue"/>
+                </div>
+                <div class="form-floating mt-2">
+                    <textarea required @bind="ThisTax.TaxDescription" class="form-control border-0 bg-light fw-bolder text-unique text-capitalize rounded-0" placeholder="Leave a comment here" id="floatingTextarea2" style="height: 100px"></textarea>
+                    <label for="floatingTextarea2">Description, about a Tax.</label>
+                    <ValidationMessage For="() => ThisTax.TaxDescription"/>
+                </div>
+            </div>
+        </div>
+        <div class="col-12 col-md-3 text-start"></div>
+    </div>
+</EditForm>
+
+@code{
+     //Parameter
+    [Parameter]
+    public int Sn{get;set;}
+    
+    public string Title = "Taxes";
+    public string SubTitle = "Create New";
+    public string Icon = "stack";
+    public string Url = "Taxes/Detail/0";
+    public string UrlCaption = "Detail View";
+    public string UrlCaptionIcon = "ui-checks-grid";
+    public bool ShowSaveButton = true;
+    public string Funga = "d-none";
+    
+    private Tax ThisTax = new();
+    private int LinkedIn = 0;
+    
+    protected override async Task OnInitializedAsync(){
+        await base.OnInitializedAsync();
+        await Start(Sn);
+    }
+    
+    private async Task Start(int TheKey){
+        
+        if(TheKey <= 0){
+            ThisTax = new();
+        }
+        else{
+            using(var repo = new UnitOfWork(MyFactory.CreateDbContext())){
+                ThisTax = await repo.Taxes.GetDetailedTaxAsync(TheKey);
+                
+                await repo.CompleteAsync();
+                repo.Dispose();
+            }
+            SubTitle = "Edit Tax" ;
+        }
+    }
+    
+    private async Task ProcessAndSave(){
+        if(ThisTax != null){
+            using(var repo = new UnitOfWork(MyFactory.CreateDbContext())){
+                if(ThisTax.TaxId > 0){
+                    
+                    repo.Taxes.Update(ThisTax);
+                    await repo.CompleteAsync();
+                    LinkedIn = ThisTax.TaxId;
+                    Navigation.NavigateTo("Taxes/Detail/" + LinkedIn);
+                    repo.Dispose();
+                }
+                else{
+                    
+                    ThisTax.TaxCode = "TXID";
+                    ThisTax.TaxDateCreated = DateTime.Now;
+                    await repo.Taxes.AddAsync(ThisTax);
+                    await repo.CompleteAsync();
+                    repo.Dispose();
+                }
+            }
+            
+            ThisTax = new();
+            StateHasChanged();  
+        }
+    }
+}

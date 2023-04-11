@@ -1,0 +1,7 @@
+#NavigationHolder{
+    position: fixed;
+    top: 0px;
+    left: 0px;
+    overflow-x: hidden;
+    z-index: 100;
+}

@@ -1,0 +1,250 @@
+@page "/Products/Create"
+@page "/Products/Edit/{Sn:int}"
+
+@using Microsoft.EntityFrameworkCore
+@inject IDbContextFactory<BarContext> MyFactory
+@inject NavigationManager Navigation
+
+<PageTitle>Product | @SubTitle </PageTitle>
+
+<EditForm Model="ThisProduct" OnValidSubmit="ProcessAndSave" autocomplete="off">
+    <DataAnnotationsValidator/>
+    <Options 
+        Title=@Title Icon=@Icon Url=@Url UrlCaption=@UrlCaption UrlCaptionIcon=@UrlCaptionIcon
+        SubTitle=@SubTitle 
+        OptionIcon=@OptionIcon ShowSaveButton=@ShowSaveButton Funga=@Funga
+        AddOrUpdateItem=@AddOrUpdateItem AddOrUpdateThisItem=@SubTitle
+    />
+    <div class="row text-unique mb-3 p-3 bg-white">
+        <div class="col-lg-3 col-md-2 col-12">
+            @{
+                if(ThisProduct.ProductId > 0){
+                    <div class="container pb-3">
+                        <p class="mt-3 p-3 border border-2">
+                            <i class="bi bi-upc-scan " style="font-size:0.75rem !important;"></i>  @(ThisProduct.ProductId > 0 ? ThisProduct.ProductCode + ThisProduct.ProductId : "--:--")
+                        </p>
+                    </div>
+                }
+            }
+        </div>
+        <div class="col-lg-6 col-md-8 col-12 ps-md-0 pb-3 text-start">
+            <div class="container pt-2 pb-3">
+                <div class="form-floating mt-2 rounded-0 py-0">
+                    <select @bind="ThisProduct.CategoryId"  @bind:event="onchange" required  class="form-select text-capitalize border-0 bg-xss text-unique fw-bolder rounded-0 " id="floatingSelect" aria-label="Floating label select example">
+                        <option>--:--</option>
+                        
+                        @{
+                            if(TheseCategories != null && TheseCategories.Count > 0){
+                                foreach(var cat in TheseCategories){
+                                    <option class="text-unique text-capitalize" value=@cat.CategoryId>@cat.CategoryCaption</option>
+                                }
+                            }
+                        }
+                        
+                    </select>
+                    <label for="floatingSelect">Categories</label>
+                </div>
+                <div class="form-floating mt-2 rounded-0">
+                    <select @bind="ThisProduct.BrandId" @bind:event="onchange" required class="form-select border-0 bg-xss text-capitalize text-unique fw-bolder rounded-0 " id="floatingSelect" aria-label="Floating label select example"> 
+                        <option>--:--</option>
+                        
+                        @{  
+                            if(TheseBrands != null && TheseBrands.Count > 0){
+                                foreach(var bra in TheseBrands){
+                                    <option class="text-unique text-capitalize" value="@bra.BrandId">@bra.BrandCaption</option>
+                                }
+                            }
+                        }
+                        
+                    </select>
+                    <label for="floatingSelect">Manufacturer | Brand Name</label>
+                </div>
+                <div class="form-floating mt-2 rounded-0">
+                    <input type="text" required @bind="ThisProduct.ProductCaption" class="form-control bg-xss border-0 text-unique fw-bolder rounded-0 text-capitalize " id="floatingInput" placeholder="Product Name (Caption / Short Description)" />
+                    <label for="floatingInput">
+                        Product Name
+                    </label>
+                    @*<ValidationMessage For=" () => Fx.ProductCaption " />*@
+                </div>
+                <div class="form-floating mt-2 rounded-0 py-0">
+                    <select @bind="ThisProduct.TaxId" @bind:event="onchange" required  class="form-select text-capitalize border-0 bg-xss text-unique fw-bolder rounded-0 " id="floatingSelect" aria-label="Floating label select example">
+                        
+                        @{
+                            if(TheseTaxes != null && TheseTaxes.Count > 0){
+                                foreach(var tx in TheseTaxes){
+                                    <option class="text-unique text-capitalize" value=@tx.TaxId>@(tx.TaxValue)%  @tx.TaxCaption</option>
+                                }
+                            }
+                        }
+                        
+                    </select>
+                    <label for="floatingSelect">Tax Level</label>
+                </div>
+                <div class="row">
+                    <div class="col-8">   
+                        <div class="form-floating mt-2 rounded-0">
+                            <input type="text" @bind="ThisProductBarcode.BarcodeNumber" @onfocusout=@(()=> AppendBarcode(ThisProductBarcode.BarcodeNumber)) class="form-control bg-xss border-0 text-unique fw-bolder rounded-0 " id="floatingInput" placeholder="Product Name (Caption / Short Description)"/>
+                            <label for="floatingInput">
+                                Barcode
+                            </label>
+                        </div>
+                    </div>
+                    <div class="col-4 py-3">
+                        <li class="btn rounded-circle border border-2" style="cursor : pointer;"><i class="bi bi-plus-circle-fill fs-5"></i></li>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-12 text-center">
+                        <ul class="d-flex flex-row justify-content-sm-start justify-content-center flex-wrap p-0 m-0 pt-2">
+                            
+                            @{
+                                foreach(var item in ThisProduct.ProductBarcode){
+                                    
+                                    <button @onclick=@(()=>RemoveBarcode(item)) type="button" class="btn btn-primary position-relative fw-bolder me-3 mb-3 rounded-0">
+                                        @item.BarcodeNumber
+                                        <span @onclick=@(()=>RemoveBarcode(item)) class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger">
+                                            x
+                                        </span>
+                                    </button>
+                                }
+                            }
+                            
+                        </ul>
+                    </div>
+                </div>
+                <div class="row p-0 m-0">
+                    <div class="col-12 text-start pb-2 px-0">
+                        <textarea @bind="ThisProduct.Specs.SpecsDescription" class="form-control rounded-0 border-0 w-100 fw-bolder text-unique text-capitalize bg-xss" rows="3" placeholder="Add Description" required></textarea>
+                        @*<ValidationMessage For=" () => Fx.Description " />*@
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-lg-3 col-md-2 col-12">
+            @*Empty Div for centering*@
+        </div>
+    </div>
+</EditForm>
+
+@code{
+    
+    // Url Parameter Variables
+    [Parameter]
+    public int Sn {get;set;}
+    
+    // Options Variables
+    public string Title = "Products";
+    public string SubTitle = "New Product";
+    public string OptionIcon = "pencil-square";
+    public string Icon = "stack";
+    public string UrlCaptionIcon = "ui-checks-grid";
+    public string Url = "Products/Detail/0";
+    public string UrlCaption = "Detail View";
+    public bool ShowSaveButton = true;
+    public string Funga = "d-none";
+    public bool AddOrUpdateItem = true;
+    
+    // Data Variables
+    private Product ThisProduct = new();
+    private string Barcode = "";
+    private ProductBarcode ThisProductBarcode = new();
+    private Barcode ThisBarcode = new();
+    private List<Category> TheseCategories = new();
+    private List<Tax> TheseTaxes = new();
+    private List<Brand> TheseBrands = new();
+    private int LinkedIn = 0;
+    private bool Wifi = true;
+    private bool Bluetooth = true;
+    
+    protected override async Task OnInitializedAsync(){
+        await base.OnInitializedAsync();
+        ThisBarcode = new();
+        ThisProduct.Specs = new();
+        ThisProduct.ProductBarcode = new();
+        ThisProductBarcode = new();
+        
+        using(var repo = new UnitOfWork(MyFactory.CreateDbContext())){
+            TheseCategories = await repo.Categories.GetAllRecords(repo.Categories.GetNoRecords(),1);
+            TheseBrands = await repo.Brands.GetAllRecords(repo.Brands.GetNoRecords(),1);
+            TheseTaxes = await repo.Taxes.GetAllRecords(repo.Taxes.GetNoRecords(),1);
+            
+            await repo.CompleteAsync();
+            repo.Dispose();
+        }
+        
+        await Start(Sn);
+    }
+    
+    private async Task Start(int TheKey){
+        
+        if(TheKey <= 0){
+            ThisProduct = new();
+            ThisBarcode = new();
+            ThisProduct.Specs = new();
+            ThisProduct.ProductBarcode = new();
+            ThisProductBarcode = new();
+        
+        }
+        else{
+            using(var repo = new UnitOfWork(MyFactory.CreateDbContext())){
+                ThisProduct = await repo.Products.GetDetailedProductAsync(TheKey);
+                
+                await repo.CompleteAsync();
+                repo.Dispose();
+            }
+            SubTitle = "Edit Product" ;
+            
+        }
+    }
+    
+    private void AppendBarcode(string code){
+        if(code != ""){
+            ThisBarcode = new();
+            ThisProductBarcode.Barcode = ThisBarcode;
+            ThisProductBarcode.BarcodeNumber = code;
+            ThisProduct.ProductBarcode.Add(ThisProductBarcode);
+        }
+        ThisBarcode = new();
+        ThisProductBarcode = new();
+    }
+    
+    private async Task RemoveBarcode(ProductBarcode code){
+        await Task.Run(()=>ThisProduct.ProductBarcode.Remove(code));
+    }
+    
+    private async Task ProcessAndSave(){
+        
+        if(ThisProduct != null){
+            using(var repo = new UnitOfWork(MyFactory.CreateDbContext())){
+                if(ThisProduct.ProductId > 0){
+                  
+                    repo.Products.Update(ThisProduct);
+                    repo.Complete();
+                    
+                    LinkedIn = ThisProduct.ProductId;
+                    repo.Dispose();
+                    Navigation.NavigateTo("Products/Detail/" + LinkedIn);
+                }
+                else{
+                    
+                    ThisProduct.ProductCode = "PID";
+                    ThisProduct.ProductDateCreated = DateTime.Now;
+                    
+                    ThisProduct.UserId = 1;
+                    ThisProduct.Specs.SpecsId = default;
+                    
+                    await repo.Products.AddAsync(ThisProduct);
+                    await repo.CompleteAsync();
+                    repo.Dispose();
+                }
+            }
+        }
+        
+        ThisProduct = new();
+        ThisBarcode = new();
+        ThisProduct.Specs = new();
+        ThisProduct.ProductBarcode = new();
+        ThisProductBarcode = new();
+        StateHasChanged(); 
+    }
+}

@@ -1,0 +1,52 @@
+@inherits LayoutComponentBase
+
+@using Microsoft.EntityFrameworkCore
+@inject IDbContextFactory<BarContext> MyFactory
+
+@inject ICategory ICats
+
+<PageTitle>POS | Home</PageTitle>
+
+<div class="container-fluid bg-light" style="height:100vh;">
+    <div class="row bg-unique shadow-sm text-white txtshadow">
+        <div class="col-md-4 col-12 py-0">
+            <ul class="d-flex flex-row justify-content-md-start justify-content-center p-0 m-0">
+                <li class="p-2 m-0 mx-2">
+                    <img src="img/b.jpg" width="35" class="rounded-circle" />
+                </li>
+                <li class="p-3 m-0 mx-2">Razack Baraza, Cashier</li>
+            </ul>
+        </div>
+        <div class="col-md-4 col-8 py-0">
+            <ul class="d-flex flex-row justify-content-center p-0 m-0">
+                <a href="Pos/0" class="p-3 m-0 mx-2 text-white">POS</a>
+                <a href="Pos/Sales" class="p-3 m-0 mx-2 text-white">Sales</a>
+                <a href="Pos/OnHold" class="p-3 m-0 mx-2 text-white">Bills On Hold</a>
+                <a href="Pos/Counter" class="p-3 m-0 mx-2 text-white">Cash Counter</a>
+            </ul>
+        </div>
+        <div class="col-4 py-0">
+            <ul class="d-flex flex-row justify-content-md-end justify-content-center p-0 m-0">
+                <a href="Pos/Search" class="p-3 m-0 mx-2 text-white">List All Items</a>
+            </ul>
+        </div>
+    </div>
+    <div class="row">
+        <div class=" col-12">
+            @Body
+        </div>
+    </div>
+</div>
+
+
+@code{
+    
+    
+    
+    protected override async Task OnInitializedAsync(){
+        
+        await base.OnInitializedAsync();
+        
+    }
+    
+}

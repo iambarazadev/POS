@@ -1,0 +1,302 @@
+@page "/Purchases/Create"
+
+@using Microsoft.EntityFrameworkCore
+@inject IDbContextFactory<BarContext> MyFactory
+@inject NavigationManager Navigation
+
+<PageTitle>Purchases | @SubTitle </PageTitle>
+
+<EditForm Model="Fx" OnSubmit="ProcessAndSave" autocomplete="off">
+
+    <Options 
+        Title=@Title Icon=@Icon 
+        Url=@Url UrlCaption=@UrlCaption 
+        CreateUrl=@CreateUrl SubTitle=@SubTitle 
+        UrlCaptionIcon=@UrlCaptionIcon OptionIcon=@OptionIcon
+        ShowSaveButton=@ShowSaveButton Funga=@Funga
+    />
+
+    <div class="row px-md-0 px-3 mb-3">
+        <div class="container bg-white p-5" style="min-height:80vh !important;">
+            <div class="col-12">
+                <div class="row p-0">
+                    <div class="col-md-3 col-sm-12 ps-md-0">
+                        <div class="form-floating rounded-0 py-0">
+                            <select required @bind=@Fx.SupplierId @bind:event="onchange" class="form-select text-capitalize border-0 bg-light text-unique fw-bolder rounded-0 " id="floatingSelect" aria-label="Floating label select example">
+                                <option class="text-unique text-capitalize" ></option>
+                                @{
+                                    if(TheseSuppliers != null && TheseSuppliers.Count > 0){
+                                        foreach(var Sup in TheseSuppliers){
+                                            <option class="text-unique text-capitalize" value=@Sup.SupplierId >@(Sup.SupplierName.Length > 17 ? Sup.SupplierName.Substring(0,15) + " .." : Sup.SupplierName)</option>
+                                        }
+                                    }
+                                }
+                            </select>
+                            <label for="floatingSelect">Select Supplier</label>
+                        </div>
+                    </div>
+                    <div class="col-md-3 col-sm-12 mt-md-0 mt-2">
+                        <div class="form-floating rounded-3">
+                            <input required @bind=@Fx.GrnReceiptCode @bind:event="oninput" type="text" class="form-control bg-light border-0 text-unique fw-bolder rounded-0 " id="floatingInput" placeholder="Product Name (Caption / Short Description)">
+                            <label for="floatingInput">
+                                Receipt#
+                            </label>
+                        </div>
+                    </div>
+                    <div class="col-md-3 col-sm-12 mt-md-0 mt-2">
+                        <div class="form-floating rounded-3">
+                            <input @bind=@Fx.GrnReceiptAmount type="text" class="form-control bg-light border-0 text-unique fw-bolder rounded-0 " id="floatingInput" placeholder="Product Name (Caption / Short Description)">
+                            <label for="floatingInput">
+                                Amount
+                            </label>
+                        </div>
+                    </div>
+                    <div class="col-md-3 col-sm-12 mt-md-0 mt-2 pe-md-0 text-center">
+                        <p class="rounded-0 border border-0 py-3 px-2 bg-xss text-center opacity-75 fs-6">@ComparedAmout</p>
+                    </div>
+                </div>
+                <div class="row rounded-0 bg-unique text-white txtshadow">
+                    <div class="col-1 py-3">#</div>
+                    <div class="col-md-3 col-4 py-3 text-start">
+                        Product
+                    </div>
+                    <div class="col-md-2 col-2 py-3 text-center">Qty</div>
+                    <div class="col-md-2 col-3 pe-0 py-3 text-start">
+                        Cost
+                    </div>
+                    <div class="col-md-2 d-none d-md-block py-3 text-start">
+                        Selling
+                    </div>
+                    <div class="col-2 py-3 d-none d-md-block text-center">Action</div>
+                </div>
+                <div class="row">
+                    <div class="col-12 py-0" style="max-height : 40vh; overflow-y : scroll;">
+                            @{
+                                foreach(var item in FxList){
+                                    <div class="row rounded-0 border-bottom bg-xs">
+                                        <div class="col-1 py-2">@(FxList.IndexOf(item) + 1)</div>
+                                        <div class="col-md-3 col-4 py-1">
+                                            <ul class="d-flex flex-column m-0 p-0">
+                                                <li class="fw-bolder d-none d-lg-block text-primary text-start txtshadow text-capitalize">@(item.ProductCaption.Length > 23 ? item.ProductCaption.Substring(0,17) + " .." : item.ProductCaption)</li>
+                                                <li class="fw-bolder d-lg-none text-primary text-start txtshadow text-capitalize">@(item.ProductCaption.Length > 11 ? item.ProductCaption.Substring(0,10) + " .." : item.ProductCaption)</li>
+                                                <li class="rounded-3 opacity-75 fw-bolder" style="font-size:0.7rem !important; width:fit-content;">@(item.ProductCode + item.ProductId)</li>
+                                            </ul>
+                                        </div>
+                                        <div class="col-md-2 col-2 py-2 text-center">@item.ProductItemQty</div>
+                                        <div class="col-md-2 col-3 py-1">
+                                            <ul class="d-flex flex-column m-0 p-0">
+                                                <li class="fw-bolder text-primary text-start txtshadow">@item.ProductItemCost.Value.ToString("n0")</li>
+                                                <li class="rounded-3 opacity-75 fw-bolder" style="font-size:0.7rem !important; width:fit-content;">@((item.ProductItemQty * item.ProductItemCost).Value.ToString("n0"))</li>
+                                            </ul>
+                                        </div>
+                                        <div class="col-md-2 d-none d-md-block py-1">
+                                            <ul class="d-flex flex-column m-0 p-0">
+                                                <li class="fw-bolder text-start txtshadow">@item.LatestPrice.Value.ToString("n0")</li>
+                                                <li class="rounded-3 opacity-75 fw-bolder" style="font-size:0.7rem !important; width:fit-content;">@((item.LatestPrice * item.ProductItemQty).Value.ToString("n0"))</li>
+                                            </ul>
+                                        </div>
+                                        <div class="col-2 pt-2 text-center"><li @onclick=@(()=> this.FxList.Remove(item)) class=" btn btn-md btn-close m-0"></li></div>
+                                    </div>
+                                }
+                            }
+                    </div>
+                </div>
+                        <div class="row mt-2 rounded-0 border border-2 bg-xss">
+                            <div class="col-md-2 col-12 py-1 mt-md-0 mt-2 ps-md-1 pe-md-0">
+                                <input @bind=@Fx.ProductId @onfocusout=@(()=> FindThisProduct(Fx.ProductId)) type="text" class="py-3 bg-white border-0 py-md-2 text-start rounded-0 text-unique form-control" placeholder="scan item or id" style="font-size:0.9rem;" />
+                            </div>
+                            <div class="col-md-2 col-12 py-2 text-capitalize text-unique" style="font-size:0.93rem;">
+                                @(Fx.ProductCaption.Length > 14 ? Fx.ProductCaption.Substring(0,12) + " .." : Fx.ProductCaption)
+                            </div>
+                            <div class="col-md-2 col-12 py-1">
+                                <input @bind=@Fx.ProductItemQty type="number" min="1" class="py-3 bg-light border-0 py-md-2 text-md-center text-start rounded-0 text-unique form-control" placeholder="Qty" style="font-size:0.9rem;" />
+                            </div>
+                            <div class="col-md-2 col-12 py-1 ">
+                                <input @bind=@Fx.ProductItemCost type="text" class="py-3 bg-light border-0 py-md-2 text-start rounded-0 text-unique form-control" placeholder="item cost" style="font-size:0.9rem;" />
+                            </div>
+                            <div class="col-md-2 col-12 py-1 ">
+                                <input @bind=@Fx.LatestPrice type="text" class="py-3 bg-light border-0 py-md-2 text-start rounded-0 text-unique form-control" placeholder="retail price" style="font-size:0.9rem;" />
+                            </div>
+                            <div class="col-md-2 col-12 py-1 px-md-2 text-center text-md-end"><li @onclick=@(()=> AddToFxList(Fx)) class=" btn fs-6 btn-md btn-success rounded-0 " style="cursor:pointer;"><i class="bi bi-plus-circle text-white "></i> Add</li></div>
+                        </div>
+                    </div>
+                
+            </div>
+        </div>
+   
+</EditForm>
+
+@code{
+    
+    // Component Variables
+    public string Title = "Purchases";
+    public string SubTitle = "Create New";
+    public string Icon = "stack";
+    public string Url = "Purchases";
+    public string UrlCaption = "List View";
+    public string UrlCaptionIcon = "view-stacked";
+    public string OptionIcon = "ui-checks-grid";
+    public string CreateUrl = "Purchases/Create";
+    public bool ShowSaveButton = true;
+    public string Funga = "d-none";
+    
+    //Data
+    private List<Supplier> TheseSuppliers = new();
+    private CreatePurchaseFx Fx = new();
+    private List<CreatePurchaseFx> FxList = new();
+    private Product ThisProduct = new();
+    private Grn ThisGrn = new();
+    private ProductGrn Pg = new();
+    private Price ThisPrice = new();
+    private ProductPrice Pp = new();
+    private double ComparedAmout = 0.0;
+    private int LinkId = 0;
+    
+    protected override async Task OnInitializedAsync(){
+        await base.OnInitializedAsync();
+        
+        Fx = new();
+        FxList = new();
+        ThisProduct = new();
+        ThisProduct.ProductPrice = new();
+        ThisProduct.ProductGrn = new();
+        
+        using(var repo = new UnitOfWork(MyFactory.CreateDbContext())){
+            TheseSuppliers = await repo.Suppliers.GetAllSuppliersDetailedAsync(1, repo.Suppliers.GetNoRecords());
+            
+            await repo.CompleteAsync();
+            repo.Dispose();
+        }
+    }
+    
+    private async Task FindThisProduct(int? sn){
+        if(sn != null && (int)sn > 0){
+            using(var repo = new UnitOfWork(MyFactory.CreateDbContext())){
+                ThisProduct = await repo.Products.GetDetailedProductAsync((int)sn);
+                if(ThisProduct != null){
+                    Fx.ProductId = ThisProduct.ProductId;
+                    Fx.ProductCode = ThisProduct.ProductCode;
+                    Fx.ProductCaption = ThisProduct.ProductCaption;
+                    Fx.LatestPrice = ThisProduct.ProductPrice.Any() ? (double)ThisProduct.ProductPrice.LastOrDefault().LatestPrice : null;
+                    Fx.OldPrice = ThisProduct.ProductPrice.Any() ? (double)ThisProduct.ProductPrice.LastOrDefault().LatestPrice : null;
+                    
+                    Fx.StockAtPurchaseTime = (int)((ThisProduct.ProductGrn.Any() ? ThisProduct.ProductGrn.Sum(a => a.ProductItemQty) : 0) + 
+                                       (ThisProduct.ProductOpen.Any() ? ThisProduct.ProductOpen.Sum(a => a.ProductItemQty) : 0) + 
+                                       (ThisProduct.StockAdjustmentProduct.Any() ? ThisProduct.StockAdjustmentProduct.Sum(a => a.QtyAdjusted) : 0) -
+                                       (ThisProduct.ProductBill.Any() ? ThisProduct.ProductBill.Sum(a => a.QtyPurchased) : 0));
+                    
+                    
+                    if(ThisProduct.ProductGrn.Any()){
+                        Fx.ProductItemCost = (double)ThisProduct.ProductGrn.LastOrDefault().ProductItemCost;
+                    }
+                    else if(ThisProduct.ProductOpen.Any()){
+                        Fx.ProductItemCost = (double)ThisProduct.ProductOpen.LastOrDefault().ProductItemCost;
+                    }else{
+                        Fx.ProductItemCost = null;
+                    }
+                
+                }
+                else{
+
+                    Fx.ProductCaption = "No Item Found";
+                    Fx.ProductId = null;
+                    Fx.OldPrice = null;
+                    Fx.LatestPrice = null;
+                    
+                }
+                
+                await repo.CompleteAsync();
+                repo.Dispose();
+            }
+        }
+        else{
+            Fx.ProductCaption = "No Item Found";
+        }
+    }
+    
+    private void AddToFxList(CreatePurchaseFx ThisData){
+        if(Fx != null && 
+            Fx.ProductId != null && (int)Fx.ProductId > 0 && 
+            Fx.ProductItemQty != null && (int)Fx.ProductItemQty > 0 && 
+            Fx.ProductItemCost != null && (double)Fx.ProductItemCost > 0 && 
+            Fx.SupplierId > 0 && 
+            Fx.GrnReceiptCode !="" && Fx.GrnReceiptAmount > 0 && 
+            Fx.LatestPrice != null &&
+            (double)Fx.LatestPrice > 0){
+            
+            var CheckRedundancy = FxList.Where(x => x.ProductId == (int)Fx.ProductId).FirstOrDefault();
+            if(CheckRedundancy != null){
+                CheckRedundancy.ProductItemQty += Fx.ProductItemQty;
+                Fx = new();
+            }
+            else{
+                FxList.Add(Fx);
+                Fx = new();
+            }
+            
+            Fx.SupplierId = FxList.LastOrDefault().SupplierId;
+            Fx.GrnReceiptCode = FxList.LastOrDefault().GrnReceiptCode;
+            Fx.GrnReceiptAmount = FxList.LastOrDefault().GrnReceiptAmount;
+    
+        }
+        StateHasChanged();
+    }
+    
+    private async Task ProcessAndSave(){
+        
+        ThisProduct = new();
+        ThisGrn = new();
+        ThisPrice = new();
+        Pg = new();
+        Pp = new();
+        
+        using(var repo = new UnitOfWork(MyFactory.CreateDbContext())){
+            if(FxList.Any()){
+                ThisGrn.GrnId = ThisPrice.PriceId = default;
+                ThisGrn.GrnDateCreated = ThisGrn.GrnReceiptDateCreated = ThisPrice.DateOfIssue = DateTime.Now;
+                ThisGrn.GrnCode = "GID";
+                ThisGrn.GrnReceiptCode = FxList.LastOrDefault().GrnReceiptCode;
+                ThisGrn.SupplierId = FxList.LastOrDefault().SupplierId;
+                ThisGrn.UserId = ThisPrice.UserId = 1;
+                
+                ThisPrice.PriceCode ="PRC";
+                ThisPrice.PriceReason = "GRN";
+                ThisPrice.PricePurpose = "GRN";
+                
+                foreach(var xx in FxList){
+                    ThisProduct = await repo.Products.GetDetailedProductAsync((int)xx.ProductId);
+                    Pg.Product = ThisProduct;
+                    Pg.Grn = ThisGrn;
+                    Pg.ProductItemCost = xx.ProductItemCost != null ? (double)xx.ProductItemCost : 0.0;
+                    Pg.ProductItemQty = xx.ProductItemQty != null ? (int)xx.ProductItemQty : 0;
+                    Pg.StockAtPurchaseTime = Pp.AtStock = xx.StockAtPurchaseTime != null ? (int)xx.StockAtPurchaseTime : 0;
+                    
+                    Pp.Product = ThisProduct;
+                    Pp.Price = ThisPrice;
+                    Pp.OldPrice = xx.OldPrice != null ? (double)xx.OldPrice : 0.0;
+                    Pp.LatestPrice = xx.LatestPrice != null ? (double)xx.LatestPrice : 0.0;
+                    Pp.Status = ThisGrn.GrnCode;
+                    Pp.AtThisAverageCost = xx.ProductItemCost != null ? (double)xx.ProductItemCost : 0.0;
+                    
+                    
+                    await repo.ProductPrices.AddAsync(Pp);
+                    await repo.ProductGrns.AddAsync(Pg);
+                    await repo.CompleteAsync();
+                }
+                
+                await repo.CompleteAsync();
+                LinkId = ThisGrn.GrnId;
+                repo.Dispose();
+            }
+        }
+        
+        Navigation.NavigateTo("Purchases/Detail/" + LinkId );  
+        StateHasChanged();
+         
+        ThisProduct = new();
+        ThisGrn = new();
+        Pg = new();
+        Fx = new();
+        FxList = new();
+    }
+}

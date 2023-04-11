@@ -1,0 +1,51 @@
+<PageTitle>BAR | LOGIN</PageTitle>
+@using Microsoft.EntityFrameworkCore
+@inject IDbContextFactory<BarContext> MyFactory
+@inject NavigationManager Navigation
+
+<div class="container shadow-sm my-5 py-5 bg-white" style="height:60vh;">
+    <EditForm model="Fx" OnValidSubmit="ValidateLogin">
+        <div class="row">
+            <div class="col-md-6 col-12">
+                <h1 class="text-unique fw-thin">
+                    
+                </h1>
+            </div>
+            <div class="col-md-6 col-12 text-end">
+                <div class="form-floating mt-2 rounded-3">
+                    <DataAnnotationsValidator/>
+                    <InputText required @bind-Value="Fx.UserName" class="form-control border text-unique fw-bolder rounded-0  " id="floatingInput" placeholder="User name"/>
+                    <label for="floatingInput" class="text-unique">
+                        User name
+                    </label>
+                    <ValidationMessage For="() => Fx.UserName"/>
+                </div>
+                <div class="form-floating mt-2 rounded-3">
+                    <DataAnnotationsValidator/>
+                    <input type="password" required @bind="Fx.Password" class="form-control border text-unique fw-bolder rounded-0  " id="floatingInput" placeholder="Password"/>
+                    <label for="floatingInput" class="text-unique">
+                        Password
+                    </label>
+                    <ValidationMessage For="() => Fx.Password"/>
+                </div>
+                <button class="btn btn-md btn-success rounded-0 mt-2 ">
+                    Login
+                </button>
+            </div>
+        </div>
+    </EditForm>
+</div>
+
+@code{
+    private LoginFx Fx;
+    
+    protected override async Task OnInitializedAsync(){
+        await base.OnInitializedAsync();
+        Fx = new();
+
+    }
+    
+    private void ValidateLogin(){
+        Navigation.NavigateTo("/Home");
+    }
+}

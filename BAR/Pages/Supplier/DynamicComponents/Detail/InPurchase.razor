@@ -1,0 +1,151 @@
+@{
+    if(!TheseGrns.Any()){
+        <div class="container text-center">
+            <p class="p-3  fs-4 text-unique fw-lighter">..No Purchases To Display!</p>
+        </div>
+    }
+    else{
+        <div class="row py-0 text-unique">
+            <div class="col-1 py-2 text-center">#</div>
+            <div class=" col-lg-2 col-3 py-1 text-center text-unique">
+                <NavLink class="p-0 m-0 text-unique text-start" href="" style="font-size:0.8rem !important;">
+                    <ul class=" text-start m-0 p-0">
+                        <li>GRN</li>
+                        <li class=" p-0 opacity-75" style="font-size:0.7rem !important;">Receipt</li>
+                    </ul>
+                </NavLink>
+            </div>
+            <div class=" col-lg-3 col-4 py-1 text-center text-unique">
+                <ul class="d-flex flex-column justify-content-start m-0 p-0">
+                    <li class="text-unique text-start">Total Cost</li>
+                </ul>
+            </div>
+            <div class=" col-lg-3 col-4 py-1 text-start text-unique">
+                <ul class="d-flex flex-column text-start m-0 p-0">
+                    <li>Date</li>
+                    <li class=" p-0 opacity-75" style="font-size:0.7rem !important;">Day & Time</li>
+                </ul>
+            </div>
+            <div class="col-lg-3 d-none d-lg-block py-1 text-start text-unique">
+                <ul class="d-flex flex-column text-start m-0 p-0">
+                    <li class="p-0 text-unique text-start">Responsible</li>
+                    <li class="p-0 opacity-75" style="font-size:0.7rem !important;">Access Level</li>
+                </ul>
+            </div>
+        </div>
+        int index = 0;
+        foreach(var item in TheseGrns){
+            RecordSum = 0.0;
+            TotalSum = 0.0;
+            
+            foreach(var rec in item.ProductGrn){
+                RecordSum += (double)(rec.ProductItemQty * rec.ProductItemCost);
+            }
+            
+            TotalSum += RecordSum;
+            
+            index +=1;
+            <div class="row py-0 text-unique bg-xs border-bottom">
+                <div class="col-1 py-2 text-center text-dark">@(index)</div>
+                <div class=" col-lg-2 col-3 py-1 text-start text-unique">
+                    <a class="p-0 m-0 text-unique text-start" href="Purchases/Detail/@item.GrnId" style="font-size:0.8rem !important;">
+                        <ul class=" m-0 p-0">
+                            <li class="text-primary">@(item.GrnCode + item.GrnId)</li>
+                            <li class=" opacity-75" style="font-size:0.7rem !important; width:fit-content;">@item.GrnReceiptCode</li>
+                        </ul>
+                    </a>
+                </div>
+                <div class="col-lg-3 col-4 py-1 text-start text-unique">
+                    <ul class="m-0 p-0">
+                        <li class="text-unique text-start">
+                            @TotalSum.ToString("n0")
+                        </li>
+                    </ul>
+                </div>
+                <div class="col-lg-3 col-4 py-1 text-start text-unique">
+                    <ul class=" m-0 p-0">
+                        <li class="text-unique text-start">@(item.GrnDateCreated.ToString("dd MMM yy"))</li>
+                        <li class=" opacity-75" style="font-size:0.7rem !important; ">@(item.GrnDateCreated.ToString("ddd hh : mm"))</li>
+                    </ul>
+                </div>
+                <div class="col-lg-3 d-none d-lg-block py-1 text-start text-unique">
+                    <ul class=" m-0 p-0">
+                        <li class="text-unique text-start">@item.User.UserFirstName</li>
+                        <li class=" opacity-75" style="font-size:0.7rem !important; ">@item.User.UserAccessLevel</li>
+                    </ul>
+                </div>
+            </div>
+        }
+            
+        <DetailPagination 
+            InnerCurrentPage=@InnerCurrentPage InnerTotalPages=@InnerTotalPages
+            InnerNextPage=@InnerNextPage InnerPreviousPage=@InnerPreviousPage
+        />
+        
+    }
+}
+@code{
+    
+    //  Inner Pagination 
+    private int InnerTotalPages = 1;
+    private int InnerCurrentPage = 1;
+    private int InnerPageSize = 7 ;
+        
+    // Parameter
+    [Parameter]
+    public Supplier SupplierToCheck {get;set;}
+    private List<Grn> TheseGrns = new();
+    private double RecordSum = 0.0;
+    private double TotalSum = 0.0;
+    
+    protected override async Task OnInitializedAsync(){
+        await base.OnInitializedAsync();
+        await InnerNextPage();
+        StateHasChanged();
+    }
+    
+    private async Task InnerNextPage(){
+        
+        if(SupplierToCheck.Grn.Any()){
+            InnerTotalPages = ((int)(Math.Ceiling((double)(SupplierToCheck.Grn.Count)/InnerPageSize)));
+            
+            if(InnerCurrentPage < InnerTotalPages ){
+                InnerCurrentPage ++ ;
+            }
+            else{
+                InnerCurrentPage = InnerTotalPages; 
+            }
+            
+            TheseGrns = SupplierToCheck.Grn
+            .Skip((InnerCurrentPage - 1) * InnerPageSize)
+            .Take(InnerPageSize)
+            .ToList();
+        }
+        else{
+            SupplierToCheck.Grn = new();
+        }
+        StateHasChanged();
+    }
+    
+    private async Task InnerPreviousPage(){
+        if(SupplierToCheck.Grn.Any()){
+            InnerTotalPages = ((int)(Math.Ceiling((double)(SupplierToCheck.Grn.Count)/InnerPageSize)));
+            
+            if(InnerCurrentPage > 1 ){
+                InnerCurrentPage -- ;
+            }
+            else{
+                InnerCurrentPage = 1; 
+            }
+            
+            TheseGrns = SupplierToCheck.Grn
+            .Skip((InnerCurrentPage - 1) * InnerPageSize)
+            .Take(InnerPageSize)
+            .ToList();
+        }
+        else{
+            SupplierToCheck.Grn = new();
+        }
+        StateHasChanged();
+    }
+}

@@ -1,0 +1,143 @@
+<div class="row py-0 text-unique">
+    <div class="col-1 py-2 text-center">#</div>
+    <div class="col-lg-2 col-2 py-1 text-start text-unique">
+        <NavLink class="p-0 m-0 text-unique" href="" >
+            <ul class="d-flex flex-column justify-content-start m-0 p-0">
+                <li>Bill</li>
+                <li class=" p-0 opacity-75" style="font-size:0.7rem !important;">Receipt</li>
+            </ul>
+        </NavLink>
+    </div>
+    <div class="col-lg-2 col-3 py-1 text-start text-unique">
+        <NavLink class="p-0 m-0 text-unique" href="" style="font-size:0.8rem !important;">
+            <ul class="d-flex flex-column justify-content-start m-0 p-0">
+                <li>&#64; Retail</li>
+                <li class=" p-0 opacity-75" style="font-size:0.7rem !important;">&sum; Retail</li>
+            </ul>
+        </NavLink>
+    </div>
+    <div class="col-2 py-1 text-center text-unique">
+        <ul class="d-flex flex-column justify-content-start m-0 p-0">
+            <li>Sold</li>
+            <li class=" p-0 opacity-75" style="font-size:0.7rem !important;">Qty</li>
+        </ul>
+    </div>
+    <div class="col-lg-2 col-3 py-1 text-start text-unique" style="font-size:0.8rem !important;">
+        <ul class="d-flex flex-column justify-content-start m-0 p-0">
+            <li>Date</li>
+            <li class=" p-0 opacity-75" style="font-size:0.7rem !important;">Day & Time</li>
+        </ul>
+    </div>
+    <div class="col-lg-3  d-none d-lg-block text-start py-1 " style="font-size:0.82rem !important; ">
+        <ul class="d-flex flex-column justify-content-start m-0 p-0">
+            <li>Responsible</li>
+            <li class=" p-0 opacity-75" style="font-size:0.7rem !important; width:fit-content;">AccessLevel</li>
+        </ul>
+    </div>
+</div>
+@{
+    if(!TheseProductBills.Any()){
+        <div class="container text-center">
+            <p class="p-3  fs-4 text-unique fw-lighter">..No Purchase info.</p>
+        </div>
+    }
+    else{
+        int index = 0;
+        foreach(var item in TheseProductBills){
+            index+=1;
+            <div class="row  bg-xs border-bottom py-0 text-unique">
+                <div class="col-1 py-2 text-center">@(ProductToCheck.ProductBill.IndexOf(item) + 1)</div>
+                <div class="col-lg-2 col-3 py-2 text-start text-unique">
+                    <a href="Purchases/Detail/@item.Bill.BillId" class="p-0 m-0 text-unique"  style="font-size:0.8rem !important;">
+                        <ul class="d-flex flex-column justify-content-start m-0 p-0">
+                            <li class="fw-bolder text-primary opacity-75 txtshadow" style="font-size:0.8rem !important;">@(item.Bill.BillCode + item.Bill.BillId)</li>
+                            <li class=" opacity-75 fw-bolder" style="font-size:0.7rem !important;">@(item.Bill.BillCode.Length > 10 ? item.Bill.BillCode.Substring(0,8) + " .." : item.Bill.BillCode + item.Bill.BillId)</li>
+                        </ul>
+                    </a>
+                </div>
+                <div class="col-lg-2 col-3 py-2 text-start text-unique">
+                    <NavLink class="p-0 m-0 text-unique" href="" style="font-size:0.8rem !important;">
+                        <ul class="d-flex flex-column justify-content-start m-0 p-0">
+                            <li class="text-unique fw-bolder"style="font-size:0.8rem !important;">&#64; @item.BillItemPrice.ToString("n0")</li>
+                            <li class=" opacity-75 d-none d-sm-block" style="font-size:0.7rem !important;">&sum; @((item.BillItemPrice * item.QtyPurchased).ToString("n0"))</li>
+                        </ul>
+                    </NavLink>
+                </div>
+                <div class="col-2 py-2 text-center txtshadow">
+                    @item.QtyPurchased
+                </div>
+                <div class="col-lg-2 col-3 py-2 text-start text-unique" style="font-size:0.75rem !important; ">
+                    <ul class="d-flex flex-column justify-content-start m-0 p-0">
+                        <li style="font-size:0.8rem !important;">@(item.Bill.BillDateCreated.ToString("dd MMM yy"))</li>
+                        <li class=" opacity-75 d-none d-sm-block" style="font-size:0.7rem !important;">@(item.Bill.BillDateCreated.ToString("ddd hh : mm"))</li>
+                    </ul>
+                </div>
+                <div class="col-lg-3 d-none d-lg-block text-start py-2" style="font-size:0.8rem !important; ">
+                    <ul class="d-flex flex-column justify-content-start m-0 p-0 text-capitalize">
+                        <li class=" d-none d-sm-block" style="font-size:0.8rem !important;">@item.Bill.User.UserFirstName</li>
+                        <li class=" opacity-75 d-none d-sm-block" style="font-size:0.7rem !important;"> @item.Bill.User.UserAccessLevel</li>
+                    </ul>
+                </div>
+            </div>
+        }
+        <DetailPagination 
+            InnerCurrentPage=@InnerCurrentPage InnerTotalPages=@InnerTotalPages
+            InnerNextPage=@InnerNextPage InnerPreviousPage=@InnerPreviousPage
+        />
+    }
+}
+
+@code{
+    //  Inner Pagination 
+    private int InnerTotalPages = 1;
+    private int InnerCurrentPage = 1;
+    private int InnerPageSize = 7 ;
+    
+    [Parameter]
+    public Product ProductToCheck {get;set;}
+    private List<ProductBill> TheseProductBills = new();
+    
+    protected override async Task OnInitializedAsync(){
+        await base.OnInitializedAsync();  
+        InnerNextPage();
+        StateHasChanged();
+    }
+    
+    private async Task InnerNextPage(){
+        if(ProductToCheck.ProductBill.Any()){
+            InnerTotalPages = ((int)(Math.Ceiling((double)(ProductToCheck.ProductBill.Count)/InnerPageSize)));
+            
+            if(InnerCurrentPage < InnerTotalPages ){
+                InnerCurrentPage ++ ;
+            }
+            else{
+                InnerCurrentPage = InnerTotalPages; 
+            }
+            
+            TheseProductBills = ProductToCheck.ProductBill
+            .Skip((InnerCurrentPage - 1) * InnerPageSize)
+            .Take(InnerPageSize)
+            .ToList();
+        }
+        StateHasChanged();
+    }
+    
+    private async Task InnerPreviousPage(){
+        if(ProductToCheck.ProductBill.Any()){
+            InnerTotalPages = ((int)(Math.Ceiling((double)(ProductToCheck.ProductBill.Count)/InnerPageSize)));
+            
+            if(InnerCurrentPage > 1 ){
+                InnerCurrentPage -- ;
+            }
+            else{
+                InnerCurrentPage = 1; 
+            }
+            
+            TheseProductBills = ProductToCheck.ProductBill
+            .Skip((InnerCurrentPage - 1) * InnerPageSize)
+            .Take(InnerPageSize)
+            .ToList();
+        }
+        StateHasChanged();
+    }
+}

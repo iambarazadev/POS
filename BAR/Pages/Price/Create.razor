@@ -1,0 +1,215 @@
+@page "/Prices/Create"
+
+@using Microsoft.EntityFrameworkCore
+@inject IDbContextFactory<BarContext> MyFactory
+@inject NavigationManager Navigation
+
+<PageTitle>Pricess | @SubTitle </PageTitle>
+
+<EditForm Model="Fx" OnSubmit="ProcessAndSave" autocomplete="off">
+    <Options 
+        Title=@Title Icon=@Icon 
+        Url=@Url UrlCaption=@UrlCaption 
+        CreateUrl=@CreateUrl SubTitle=@SubTitle 
+        UrlCaptionIcon=@UrlCaptionIcon OptionIcon=@OptionIcon
+        ShowSaveButton=@ShowSaveButton Funga=@Funga
+    />
+    
+    <div class="row px-md-0 px-3 mb-3">
+        <div class="container p-5 bg-white" style="min-height:79vh;">
+            <div class="col-12">
+                <div class="row p-0">
+                    <div class="col-md-7 col-12 p-0 m-0">
+                        <textarea required @bind=@Fx.PriceReasons placeholder="Reason.." class="m-0 form-control border-0 bg-xs text-unique text-start rounded-0 text-capitalize" rows="2"></textarea>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-12 m-0">
+                        <div class="row my-1 rounded-0 bg-unique text-white txtshadow">
+                            <div class="col-1 py-3">#</div>
+                            <div class="col-md-3 col-5 py-3 text-start">
+                                Product
+                            </div>
+                            <div class="col-2  py-3">OldPrice</div>
+                            <div class="col-2  py-3">NewPrice</div>
+                            <div class="col-md-2 d-md-block d-none py-3 text-center">
+                                Cost
+                            </div>
+                            <div class="col-md-2 d-md-block d-none py-3 text-center">Act</div>
+                        </div>
+                        @{
+                            if(FxList.Any()){
+                                foreach(var item in FxList){
+                                    <div class="row border-bottom rounded-0 bg-xs">
+                                        <div class="col-1 py-2">@(FxList.IndexOf(item) + 1)</div>
+                                        <div class="col-md-3 col-5 py-1">
+                                            <a href="Products/Detail/@item.ProductId">
+                                                <ul class="d-flex flex-column m-0 p-0">
+                                                    <li class="fw-bolder text-primary text-start txtshadow text-capitalize">@(item.ProductCaption.Length > 16 ? item.ProductCaption.Substring(0,10)+" .." : item.ProductCaption)</li>
+                                                    <li class="rounded-3 opacity-75 fw-bolder" style="font-size:0.7rem !important; width:fit-content;">@(item.ProductCode + (int)item.ProductId)</li>
+                                                </ul>
+                                            </a>
+                                        </div>
+                                        <div class="col-2 py-2">@item.OldPrice.Value.ToString("n0")</div>
+                                        <div class="col-2 py-2 text-primary opacity-75">@item.LatestPrice.Value.ToString("n0")</div>
+                                        <div class="col-md-2 d-none d-md-block py-2 text-center">
+                                            @item.AtThisCost.Value.ToString("n0")
+                                        </div>
+                                        <div class="col-md-2 col-2 py-2 text-center"><li @onclick=@(()=> RemoveFromFxList(item)) class=" btn btn-close"></li></div>
+                                    </div>
+                                }
+                            }
+                        }
+                        <div class="row mt-1 rounded-0 border border-2 bg-xss px-1">
+                            <div class="col-md-2 col-12 py-md-1 py-2 ps-md-0">
+                                <input @bind=@Fx.ProductId  @onfocusout=@(()=> FindThisProduct(Fx.ProductId)) type="text" class="py-md-2 bg-white border-0 py-3 text-start rounded-0 text-unique form-control" placeholder="Scan item or id" style="font-size:0.9rem;" />
+                            </div>
+                            <div class="col-md-2 col-6 py-2 text-capitalize text-unique">
+                                @(Fx.ProductCaption.Length > 16 ? Fx.ProductCaption.Substring(0,10)+" .." : Fx.ProductCaption)
+                            </div>
+                            <div class="col-md-2 col-6 py-2">
+                                @(Fx.OldPrice != null ? Fx.OldPrice.Value.ToString("n0") : null)
+                            </div>
+                            <div class="col-md-2 col-12 py-md-1 py-2 ">
+                                <input @bind=@Fx.LatestPrice type="number" min="0" class="py-md-2 py-3 border-0 bg-light text-start rounded-0 text-unique form-control" placeholder="New Price" style="font-size:0.9rem;" />
+                            </div>
+                            <div class="col-md-2 col-12 text-start py-2 text-center">
+                                @(Fx.AtThisCost != null ? Fx.AtThisCost.Value.ToString("n0") : null )
+                            </div>
+                            <div class="col-md-2 col-12 py-1 pb-3 pb-md-1 pe-0 text-md-end text-center"><li @onclick=@(()=> AddToFxList(Fx)) class=" btn btn-success text-center rounded-0"><i class="bi bi-plus-circle text-white "></i> Add</li></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+</EditForm>
+
+@code{
+    
+    // Component Variables
+    public string Title = "Prices";
+    public string SubTitle = "Add New";
+    public string Icon = "stack";
+    public string Url = "Prices";
+    public string UrlCaption = "List View";
+    public string UrlCaptionIcon = "view-stacked";
+    public string OptionIcon = "ui-checks-grid";
+    public string CreateUrl = "Prices/Create";
+    public bool ShowSaveButton = true;
+    public string Funga = "d-none";
+    
+    //Data
+    private CreatePriceFx Fx = new();
+    private List<CreatePriceFx> FxList = new();
+    private Product ThisProduct = new();
+    private Price Pr = new();
+    private ProductPrice Pp = new();
+    private int LinkedId = 0;
+    
+    
+    protected override async Task OnInitializedAsync(){
+        await base.OnInitializedAsync();
+        Fx = new();
+        FxList = new();
+        ThisProduct = new();
+    }
+    
+    private async Task FindThisProduct(int? sn){
+        if(sn != null && (int)sn > 0){
+            using(var repo = new UnitOfWork(MyFactory.CreateDbContext())){
+                ThisProduct = await repo.Products.GetDetailedProductAsync((int)sn);
+                if(ThisProduct != null){
+                    
+                    Fx.ProductId = ThisProduct.ProductId;
+                    Fx.ProductCode = ThisProduct.ProductCode;
+                    Fx.ProductCaption = ThisProduct.ProductCaption;
+                    Fx.OldPrice = ThisProduct.ProductPrice.Any() ? ThisProduct.ProductPrice.LastOrDefault().LatestPrice : null;
+                    
+                    Fx.AtStock = (int)((ThisProduct.ProductGrn.Any() ? ThisProduct.ProductGrn.Sum(a => a.ProductItemQty) : 0) + 
+                                       (ThisProduct.ProductOpen.Any() ? ThisProduct.ProductOpen.Sum(a => a.ProductItemQty) : 0) + 
+                                       (ThisProduct.StockAdjustmentProduct.Any() ? ThisProduct.StockAdjustmentProduct.Sum(a => a.QtyAdjusted) : 0) -
+                                       (ThisProduct.ProductBill.Any() ? ThisProduct.ProductBill.Sum(a => a.QtyPurchased) : 0));
+                    
+                    if(ThisProduct.ProductGrn.Any()){
+                        Fx.AtThisCost = ThisProduct.ProductGrn.Average(a => a.ProductItemCost);
+                    }else if(ThisProduct.ProductOpen.Any()){
+                        Fx.AtThisCost = ThisProduct.ProductOpen.Average(a => a.ProductItemCost);
+                    }else{
+                        Fx.AtThisCost = null;
+                    }
+                    
+                }
+                else{
+                    Fx.ProductCaption = "No Item Found";
+                }
+                
+                await repo.CompleteAsync();
+                repo.Dispose();
+            }
+        }
+        else{
+            Fx.ProductCaption = "No Item Found";
+        }
+    }
+    
+    private void AddToFxList(CreatePriceFx ThisData){
+        if(Fx != null && 
+            Fx.ProductId != null && (int)Fx.ProductId > 0 && 
+            Fx.LatestPrice != null && (double)Fx.LatestPrice > 0 && 
+            Fx.PriceReasons != ""){
+                
+            FxList.Add(Fx);
+            Fx = new();
+            
+            Fx.PriceReasons = FxList.LastOrDefault().PriceReasons;
+        }
+    }
+    
+    private void RemoveFromFxList(CreatePriceFx ThisData){
+        if(ThisData != null){
+            FxList.Remove(ThisData);
+        }
+    }
+    
+    private async Task ProcessAndSave(){
+        ThisProduct = new();
+        Pp = new();
+        
+        Pr.PriceId = default;
+        Pr.PriceCode = "PRC";
+        Pr.PriceReason = FxList.LastOrDefault().PriceReasons;
+        Pr.DateOfIssue = DateTime.Now;
+        Pr.PricePurpose = "ADJUSTMENTS";
+        Pr.UserId = 1;
+        
+        using(var repo = new UnitOfWork(MyFactory.CreateDbContext())){
+            
+            foreach(var xx in FxList){
+                ThisProduct = await repo.Products.GetDetailedProductAsync((int)xx.ProductId);
+                Pp.Product = ThisProduct;
+                Pp.Price = Pr;
+                Pp.OldPrice = (double)xx.OldPrice;
+                Pp.LatestPrice = (double)xx.LatestPrice;
+                Pp.AtThisAverageCost = (double)xx.AtThisCost;
+                Pp.AtStock = xx.AtStock;
+                Pp.Status = "Adjustments";
+                
+                await repo.ProductPrices.AddAsync(Pp);
+                await repo.CompleteAsync(); 
+            }
+            
+            await repo.CompleteAsync();  
+            LinkedId = (int)Pp.PriceId;
+            repo.Dispose();
+        }
+        
+        ThisProduct = new();
+        Fx = new();
+        FxList = new();
+        
+        Navigation.NavigateTo("Prices/Detail/" + LinkedId );  
+        StateHasChanged();
+    }
+}

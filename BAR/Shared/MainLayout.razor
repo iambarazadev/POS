@@ -1,0 +1,43 @@
+﻿@inherits LayoutComponentBase
+
+<PageTitle>BAR</PageTitle>
+
+<!-- Modal -->
+
+<div class="modal fade " style="width:100vw !important;" id="Search" tabindex="-1" aria-labelledby="SearchLabel" aria-hidden="true">
+  <div class="modal-dialog modal-dialog modal-dialog-scrollable modal-lg rounded-0">
+    <div class="modal-content border-0 shadow-lg bg-xs rounded-0">
+      <div class="modal-header border-0">
+         <div class="row p-0 m-0 w-100">
+            <div class="col-12 d-flex flex-row">
+                <div class="input-group rounded-0">
+                    <input type="search" class="form-control py-3 text-center bg-white rounded-0 text-unique border-0" placeholder="Search" aria-label="Search" aria-describedby="search-addon" />
+                    <span class="input-group-text border-0 bg-transparent" id="search-addon">
+                       <i class="bi bi-search txtshadow fs-6 "></i>
+                    </span>
+                </div>
+            </div>
+         </div>
+      </div>
+      <div class="modal-body px-3">
+        <div class="container">
+            @{
+                for(int i = 1 ; i < 1 ; i++){
+                    <a class="p-3 w-100 d-block mt-2 mx-0 bg-light rounded-0" href="#">@i</a>    
+                }
+            }
+        </div>
+        </div>
+        <div class="modal-footer">
+            <button type="button" class="btn btn-primary border-0 rounded-0 shadow-sm" data-bs-dismiss="modal">Done</button>
+        </div>
+    </div>
+  </div>
+</div>
+
+<!-- Modal end -->
+
+<div class="container-fluid pt-5 px-md-4" style="position:relative;">
+    <NavMenu/>
+    @Body
+</div>
